@@ -1,9 +1,5 @@
-html, body {
-    margin: 0;
-    padding: 0;
-    background-color: #f7fafc;
-    font-family: 'Inter', sans-serif !important;
-}
+
+
 
 
 
@@ -86,6 +82,19 @@ html, body {
     background-color: #1d4ed8 !important;
     transform: scale(1.05);
 }
+
+.results-box {
+    background-color: rgba(255, 255, 255, 0.95);
+    border-radius: 16px;
+    padding: 40px;
+    margin: 2rem auto;
+    width: 85%;
+    max-width: 1000px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+    text-align: center;
+}
+
+
 
 /* Hide default Streamlit text inside uploader */
 [data-testid="stFileUploaderLabel"],
