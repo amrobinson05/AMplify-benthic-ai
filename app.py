@@ -323,7 +323,7 @@ def load_model():
     model.classifier[1] = nn.Linear(num_features, len(CLASSES))
 
     # Load trained weights
-    model.load_state_dict(torch.load("benthic_classifier.pth", map_location=torch.device("cpu")))
+    model.load_state_dict(torch.load("benthic_model.pth", map_location=torch.device("cpu")))
     model.eval()
     return model
 
