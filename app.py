@@ -393,6 +393,8 @@ st.markdown("""
 
 uploaded_file = st.file_uploader("", type=["jpg", "jpeg", "png"])
 
+
+
 import time
 
 # --- Set global layering once, before the upload logic ---
@@ -551,48 +553,28 @@ if uploaded_file:
     st.pyplot(fig)
     st.markdown("</div>", unsafe_allow_html=True)
 
+
+
     import streamlit.components.v1 as components
 
+    # === SMOOTH AUTO-SCROLL TO RESULTS (clean version) ===
     components.html("""
     <script>
-    (function() {
-    // Try multiple selectors in case Streamlit wraps nodes
-    const anchor = window.parent.document.querySelector('#results-anchor')
-                || window.parent.document.querySelector('a[name="results-anchor"]')
-                || window.parent.document.getElementById('results-anchor');
-
-    if (anchor) {
-        anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        // Optional: soft flash to draw attention
-        anchor.style.boxShadow = '0 0 20px rgba(21,101,192,0.6)';
-        setTimeout(() => { anchor.style.boxShadow = 'none'; }, 1200);
-    } else {
-        // Fallback: force hash jump
-        window.parent.location.hash = 'results-anchor';
-    }
+    (function(){
+    const doc = window.parent.document;
+    const target = doc.querySelector('#results-anchor') || doc.querySelector('.results-box');
+    if (!target) return;
+    setTimeout(() => {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Optional: flash border glow for visibility
+        target.style.boxShadow = '0 0 20px rgba(21,101,192,0.6)';
+        setTimeout(() => { target.style.boxShadow = 'none'; }, 900);
+    }, 100);
     })();
     </script>
-    """, height=0, scrolling=False)
+    """, height=0)
 
 
-    # ====================================================
-    # 📜 AUTO-SCROLL TO RESULTS SECTION
-    # ====================================================
-    st.markdown("<a name='results'></a>", unsafe_allow_html=True)
-    st.markdown(
-        """
-        <script>
-        // Scroll smoothly to the results section once results are displayed
-        setTimeout(() => {
-            const element = document.querySelector('.results-box');
-            if (element) {
-                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            }
-        }, 200); // short delay ensures DOM is ready
-        </script>
-        """,
-        unsafe_allow_html=True
-    )
 
 
 else:

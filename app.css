@@ -34,8 +34,8 @@ html, body {
 /* Upload box container */
 [data-testid="stFileUploader"] {
     background-color: rgba(255, 255, 255, 0.5) !important;
-    border: 1px solid rgba(229, 231, 235, 0.5) !important;
-    border-radius: 12px !important;
+    border: 4px dotted rgba(255, 255, 255, 0.8) !important; /* thicker, brighter dotted border */
+    border-radius: 16px !important;
     width: 60% !important;
     height: 350px !important;
     margin: 2rem auto !important;
@@ -43,13 +43,15 @@ html, body {
     flex-direction: column !important;
     align-items: center !important;
     justify-content: flex-start !important;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
     text-align: center !important;
     padding-top: 40px !important;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     z-index: 12 !important;
 }
+
+
 
 /* Dropzone (inside uploader) */
 [data-testid="stFileUploaderDropzone"] {
