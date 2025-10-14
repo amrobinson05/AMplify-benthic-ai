@@ -5,6 +5,8 @@ import torch
 from torchvision import models, transforms
 import matplotlib.pyplot as plt
 import os, base64, random 
+import torch.nn as nn
+import os, base64, random  # ✅ add this line
 import time
 import streamlit as st
 from PIL import Image
@@ -353,20 +355,20 @@ with st.sidebar:
 
 
 # MODEL SETUP
-CLASSES = ["Scallop", "Roundfish", "Crab", "Whelk", "Skate", "Flatfish", "Eel"]
-
-@st.cache_resource
+CLASSES = ['Eel', 'Scallop', 'Crab', 'Flatfish', 'Roundfish', 'Skate', 'Whelk']
 def load_model():
-    model = models.resnet18(pretrained=False)
-    model.fc = torch.nn.Linear(model.fc.in_features, len(CLASSES))
-    model.load_state_dict(torch.load("benthic_model.pth", map_location="cpu"))
+    model = models.efficientnet_b0(pretrained=False)
+    num_features = model.classifier[1].in_features
+    model.classifier[1] = nn.Linear(num_features, len(CLASSES))
+    model.load_state_dict(torch.load("benthic_model.pth", map_location=torch.device("cpu")))
     model.eval()
     return model
 
 model = load_model()
 
 transform = transforms.Compose([
-    transforms.Resize((224, 224)),
+    transforms.Resize(256),
+    transforms.CenterCrop(224),
     transforms.ToTensor(),
     transforms.Normalize(
         mean=[0.485, 0.456, 0.406],
