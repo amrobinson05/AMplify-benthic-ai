@@ -135,12 +135,12 @@ blades, kelp_balls, keyframes = [], [], []
 
 for i in range(num_blades):
     x = random.randint(0, width)
-    height = random.randint(180, 400)
+    height = random.randint(180, 300)
     top_shift1 = random.randint(-15, 15)
     top_shift2 = random.randint(-25, 25)
     color = random.choice(["url(#grass1)", "url(#grass2)", "url(#kelp1)"])
     opacity = random.uniform(0.5, 0.9)
-    stroke_width = random.uniform(3, 7)
+    stroke_width = random.uniform(3, 8)
     duration = random.uniform(3, 7)
     delay = random.uniform(0, 4)
     sway_deg = random.uniform(2.5, 5) * (1 if height > 300 else -1)
@@ -315,16 +315,16 @@ with st.sidebar:
 
 # MODEL SETUP
 CLASSES = ["Scallop", "Roundfish", "Crab", "Whelk", "Skate", "Flatfish", "Eel"]
-
-@st.cache_resource
 def load_model():
-    model = models.resnet18(pretrained=False)
-    model.fc = torch.nn.Linear(model.fc.in_features, len(CLASSES))
-    model.load_state_dict(torch.load("benthic_model.pth", map_location="cpu"))
+    # Initialize model
+    model = models.efficientnet_b0(pretrained=False)
+    num_features = model.classifier[1].in_features
+    model.classifier[1] = nn.Linear(num_features, len(CLASSES))
+
+    # Load trained weights
+    model.load_state_dict(torch.load("benthic_classifier.pth", map_location=torch.device("cpu")))
     model.eval()
     return model
-
-model = load_model()
 
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
@@ -334,6 +334,8 @@ transform = transforms.Compose([
         std=[0.229, 0.224, 0.225]
     )
 ])
+
+model = load_model()
 
 def predict(image):
     img_tensor = transform(image).unsqueeze(0)
@@ -373,9 +375,12 @@ if uploaded_file:
 
     if show_chart:
         fig, ax = plt.subplots(figsize=(5, 2.5))
-        ax.barh(CLASSES, probs.numpy() * 100, color="#3b82f6")
+        ax.bar(CLASSES, probs.numpy() * 100, color="#3b82f6")
+        [ax.spines[i].set_visible(False) for i in ax.spines]
+        ax.tick_params(length = 0)
         ax.set_xlabel("Confidence (%)")
         ax.set_title("Class Probabilities")
+        ax.get_yaxis().set_visible(False)
         st.pyplot(fig)
 else:
     st.info("⬆️ Upload an image to begin classification.")
