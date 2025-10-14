@@ -128,6 +128,135 @@ div[data-testid="stMarkdownContainer"] {
 """, unsafe_allow_html=True)
 
 # ======================================================
+# CSS — Background, Bubbles, Fish
+# ======================================================
+st.markdown("""
+<style>
+html, body, [data-testid="stAppViewContainer"] {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+
+  /* === Brighter Tropical Ocean to Pale Green Seabed === */
+  background: linear-gradient(
+    to bottom,
+    #e9fcff 0%,     /* pale sky-blue surface */
+    #bdf4f6 25%,    /* aqua mid-water */
+    #75d3e2 55%,    /* turquoise */
+    #3bbad1 75%,    /* deeper blue */
+    #b0eac4 100%    /* pale seafoam green seabed */
+  );
+
+  overflow: hidden;
+}
+[data-testid="stAppViewContainer"], .main, .block-container {
+  background-color: transparent !important;
+}
+
+/* ======== BUBBLES ======== */
+.bubble-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+}
+.bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(48,179,211,0.7));
+  opacity: 0.6;
+  animation: floatUp linear infinite;
+}
+@keyframes floatUp {
+  0% { transform: translateY(100vh) scale(0.5); opacity: 0.8; }
+  100% { transform: translateY(-10vh) scale(1.2); opacity: 0; }
+}
+
+/* ======== FISH ======== */
+.species-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 3;
+}
+.species {
+  position: absolute;
+  width: 200px;
+  height: auto;
+  opacity: 0.95;
+  filter: drop-shadow(0px 3px 6px rgba(0,0,0,0.3));
+  animation: swimAndBob 20s linear infinite;
+}
+@keyframes swimAndBob {
+  0%   { transform: translate(-200px, 0) scaleX(-1); }
+  25%  { transform: translate(25vw, -15px) scaleX(-1); }
+  50%  { transform: translate(100vw, 0) scaleX(-1); }
+  50.1%{ transform: translate(100vw, 0) scaleX(1); }
+  75%  { transform: translate(25vw, 15px) scaleX(1); }
+  100% { transform: translate(-200px, 0) scaleX(1); }
+}
+
+/* ======== SEAGRASS ======== */
+#seagrass-svg {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100vw;
+  height: 420px;
+  z-index: 1;
+  pointer-events: none;
+}
+</style>
+""", unsafe_allow_html=True)
+st.markdown("""
+<style>
+/* 🧭 Bring the main Streamlit content above the animated layers */
+[data-testid="stAppViewContainer"] .main, 
+.block-container, 
+.stFileUploader, 
+button, 
+div[data-testid="stMarkdownContainer"] {
+    position: relative;
+    z-index: 10 !important;
+}
+</style>
+""", unsafe_allow_html=True)
+st.markdown("""
+<style>
+/* Lower the animation layers */
+.bubble-container,
+#seagrass-svg,
+.species-container {
+    z-index: 0 !important;
+}
+
+/* Keep Streamlit UI (buttons, uploader, images, etc.) above everything */
+[data-testid="stAppViewContainer"] .main {
+    position: relative;
+    z-index: 10 !important;
+}
+
+/* Also ensure file uploader and output text stay above visuals */
+[data-testid="stFileUploader"],
+[data-testid="stImage"],
+[data-testid="stVerticalBlock"] {
+    position: relative;
+    z-index: 15 !important;
+}
+            
+
+</style>
+""", unsafe_allow_html=True)
+
+# ======================================================
 # SEAGRASS + KELP BALLS
 # ======================================================
 num_blades = 100
@@ -232,21 +361,28 @@ with open("app.css") as f:
 
 st.markdown(
     """
-    <h1 style='
-        text-align:center;
-        font-size:70px; /* 👈 adjust this to make it bigger or smaller */
-        font-weight:800;
-        margin-bottom:10px;
+    <style>
+    .gradient-text {
+        font-size: 70px;
+        font-weight: 800;
+        text-align: center;
         background: linear-gradient(to right, #0D47A1, #1565C0, #64B5F6);
         -webkit-background-clip: text;
+        background-clip: text;
         -webkit-text-fill-color: transparent;
-    '>
-        Marine Life Identifier
-    </h1>
-    <h5 style='text-align:center; color:#37474F;'>
-        Discover the ocean's mysteries. Upload a photo to instantly identify a benthic species<br>
-        with AI-powered recognition.
-    </h5>
+        color: transparent;
+        display: inline-block;
+        margin-bottom: 10px;
+    }
+    </style>
+
+    <div style='text-align:center;'>
+        <span class='gradient-text'>Benthic Species Identifier</span>
+        <h5 style='text-align:center; color:#37474F;'>
+            Discover the ocean's mysteries. Upload a photo to instantly identify a benthic species<br>
+            with AI-powered recognition.
+        </h5>
+    </div>
     """,
     unsafe_allow_html=True
 )

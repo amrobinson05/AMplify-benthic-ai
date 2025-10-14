@@ -1,7 +1,8 @@
-
-
-
-
+html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Inter', sans-serif !important;
+}
 
 /* Page title styling */
 .page-title {
@@ -30,11 +31,10 @@
     z-index: 999;
 }
 
-
 /* Upload box container */
 [data-testid="stFileUploader"] {
-    background-color: #ffffff !important;
-    border: 1px solid #e5e7eb !important;
+    background-color: rgba(255, 255, 255, 0.5) !important;
+    border: 1px solid rgba(229, 231, 235, 0.5) !important;
     border-radius: 12px !important;
     width: 60% !important;
     height: 320px !important;
@@ -46,14 +46,17 @@
     box-shadow: 0 8px 20px rgba(0,0,0,0.12);
     text-align: center !important;
     padding-top: 40px !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 12 !important;
 }
 
+/* Dropzone (inside uploader) */
 [data-testid="stFileUploaderDropzone"] {
-    background-color: #ffffff !important;
+    background-color: transparent !important;
     border: none !important;
     box-shadow: none !important;
 }
-
 
 /* Custom heading above button */
 [data-testid="stFileUploader"]::before {
@@ -83,6 +86,32 @@
     transform: scale(1.05);
 }
 
+/* Hide default Streamlit text inside uploader */
+[data-testid="stFileUploaderLabel"],
+[data-testid="stFileUploaderDropzoneInstructions"] {
+    display: none !important;
+}
+
+/* Image result card */
+.image-card {
+    background-color: rgba(255, 255, 255, 0.75);
+    border: 1px solid rgba(229, 231, 235, 0.4);
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    text-align: center;
+    margin-top: 1rem;
+    z-index: 15 !important;
+    position: relative;
+}
+.image-card img {
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+/* Result metrics box (optional future styling) */
 .results-box {
     background-color: rgba(255, 255, 255, 0.95);
     border-radius: 16px;
@@ -92,12 +121,4 @@
     max-width: 1000px;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
     text-align: center;
-}
-
-
-
-/* Hide default Streamlit text inside uploader */
-[data-testid="stFileUploaderLabel"],
-[data-testid="stFileUploaderDropzoneInstructions"] {
-    display: none !important;
 }
