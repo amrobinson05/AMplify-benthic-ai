@@ -2,10 +2,13 @@
 import streamlit as st
 from PIL import Image
 import torch
-import torch.nn as nn
 from torchvision import models, transforms
 import matplotlib.pyplot as plt
 import os, base64, random  # ✅ add this line
+import time
+import streamlit as st
+from PIL import Image
+import base64
 
 
 # PAGE CONFIG
@@ -23,109 +26,6 @@ def img_b64(filename):
         return base64.b64encode(f.read()).decode()
 
 species_images = [("fish.png", "50%", 20)]
-
-# ======================================================
-# CSS — Background, Bubbles, Fish
-# ======================================================
-st.markdown("""
-<style>
-html, body, [data-testid="stAppViewContainer"] {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-
-  /* === Brighter Tropical Ocean to Pale Green Seabed === */
-  background: linear-gradient(
-    to bottom,
-    #e9fcff 0%,     /* pale sky-blue surface */
-    #bdf4f6 25%,    /* aqua mid-water */
-    #75d3e2 55%,    /* turquoise */
-    #3bbad1 75%,    /* deeper blue */
-    #b0eac4 100%    /* pale seafoam green seabed */
-  );
-
-  overflow: hidden;
-}
-[data-testid="stAppViewContainer"], .main, .block-container {
-  background-color: transparent !important;
-}
-
-/* ======== BUBBLES ======== */
-.bubble-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-  z-index: 0;
-  pointer-events: none;
-}
-.bubble {
-  position: absolute;
-  border-radius: 50%;
-  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.9), rgba(48,179,211,0.7));
-  opacity: 0.6;
-  animation: floatUp linear infinite;
-}
-@keyframes floatUp {
-  0% { transform: translateY(100vh) scale(0.5); opacity: 0.8; }
-  100% { transform: translateY(-10vh) scale(1.2); opacity: 0; }
-}
-
-/* ======== FISH ======== */
-.species-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 3;
-}
-.species {
-  position: absolute;
-  width: 200px;
-  height: auto;
-  opacity: 0.95;
-  filter: drop-shadow(0px 3px 6px rgba(0,0,0,0.3));
-  animation: swimAndBob 20s linear infinite;
-}
-@keyframes swimAndBob {
-  0%   { transform: translate(-200px, 0) scaleX(-1); }
-  25%  { transform: translate(25vw, -15px) scaleX(-1); }
-  50%  { transform: translate(100vw, 0) scaleX(-1); }
-  50.1%{ transform: translate(100vw, 0) scaleX(1); }
-  75%  { transform: translate(25vw, 15px) scaleX(1); }
-  100% { transform: translate(-200px, 0) scaleX(1); }
-}
-
-/* ======== SEAGRASS ======== */
-#seagrass-svg {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  width: 100vw;
-  height: 420px;
-  z-index: 1;
-  pointer-events: none;
-}
-</style>
-""", unsafe_allow_html=True)
-st.markdown("""
-<style>
-/* 🧭 Bring the main Streamlit content above the animated layers */
-[data-testid="stAppViewContainer"] .main, 
-.block-container, 
-.stFileUploader, 
-button, 
-div[data-testid="stMarkdownContainer"] {
-    position: relative;
-    z-index: 10 !important;
-}
-</style>
-""", unsafe_allow_html=True)
 
 # ======================================================
 # CSS — Background, Bubbles, Fish
@@ -388,6 +288,8 @@ st.markdown(
 )
 
 
+
+
 # CUSTOM STYLES FOR BAR
 st.markdown(
     """
@@ -452,16 +354,16 @@ with st.sidebar:
 
 # MODEL SETUP
 CLASSES = ["Scallop", "Roundfish", "Crab", "Whelk", "Skate", "Flatfish", "Eel"]
-def load_model():
-    # Initialize model
-    model = models.efficientnet_b0(pretrained=False)
-    num_features = model.classifier[1].in_features
-    model.classifier[1] = nn.Linear(num_features, len(CLASSES))
 
-    # Load trained weights
-    model.load_state_dict(torch.load("benthic_model.pth", map_location=torch.device("cpu")))
+@st.cache_resource
+def load_model():
+    model = models.resnet18(pretrained=False)
+    model.fc = torch.nn.Linear(model.fc.in_features, len(CLASSES))
+    model.load_state_dict(torch.load("benthic_model.pth", map_location="cpu"))
     model.eval()
     return model
+
+model = load_model()
 
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
@@ -471,8 +373,6 @@ transform = transforms.Compose([
         std=[0.229, 0.224, 0.225]
     )
 ])
-
-model = load_model()
 
 def predict(image):
     img_tensor = transform(image).unsqueeze(0)
@@ -491,33 +391,233 @@ st.markdown("""
 
 uploaded_file = st.file_uploader("", type=["jpg", "jpeg", "png"])
 
+import time
+
+# --- Set global layering once, before the upload logic ---
+st.markdown("""
+<style>
+/* Layer hierarchy for ocean visuals */
+.bubble-container,
+#seagrass-svg,
+.species-container {
+    z-index: 0 !important; /* very back */
+}
+
+/* Upload and result boxes - middle layer */
+[data-testid="stFileUploader"],
+.results-box,
+.results-box-graph {
+    position: relative !important;
+    z-index: 20 !important; /* above kelp/fish */
+}
+
+/* Loading overlay - topmost layer */
+#loading-overlay {
+    z-index: 9999 !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# =========================================================
+# 📸 MAIN UPLOAD + LOADING + RESULTS SECTION
+# =========================================================
+import time
+
 if uploaded_file:
+    # ====================================================
+    # 🌊 STARFISH LOADING OVERLAY — ALWAYS ON TOP
+    # ====================================================
+    starfish_b64 = base64.b64encode(open("images/starfish.png", "rb").read()).decode()
+
+    # 1️⃣ Define CSS & JS so overlay beats Streamlit’s container stack
+    st.markdown("""
+    <style>
+    /* BACKGROUND LAYERS */
+    .bubble-container, #seagrass-svg, .species-container {
+        z-index: 0 !important;
+    }
+
+    /* MIDDLE LAYERS (Upload + Results) */
+    [data-testid="stFileUploader"], .results-box, .results-box-graph {
+        position: relative !important;
+        z-index: 10 !important;
+    }
+
+    /* TOP LAYER (Loading Screen) */
+    #loading-overlay {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: rgba(21, 101, 192, 0.55) !important; /* translucent ocean blue */
+        backdrop-filter: blur(10px) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        z-index: 2147483647 !important; /* 🧱 MAXIMUM possible z-index */
+        pointer-events: all !important;
+    }
+
+    @keyframes spinStar {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # 2️⃣ Overlay HTML — Injected last (so it’s final in DOM)
+    loading_html = f"""
+    <div id="loading-overlay">
+        <img src="data:image/png;base64,{starfish_b64}"
+             style="width:120px; height:auto; animation:spinStar 2.5s linear infinite;
+                    filter: drop-shadow(0 0 10px rgba(255,255,255,0.8));"/>
+        <p style="font-size:1.8rem; font-weight:700; margin-top:1rem; color:white;">Analyzing Marine Life...</p>
+        <div style="margin-top:1.5rem; width:300px; height:12px; background:rgba(255,255,255,0.3);
+                    border-radius:10px; overflow:hidden;">
+            <div id="load-bar" style="width:0%; height:100%;
+                        background:linear-gradient(to right, #64B5F6, #1565C0);
+                        border-radius:10px;"></div>
+        </div>
+    </div>
+    """
+
+    loading_placeholder = st.empty()
+    loading_placeholder.markdown(loading_html, unsafe_allow_html=True)
+
+    # 3️⃣ Animate loading bar (3 seconds)
+    progress_placeholder = st.empty()
+    for i in range(31):
+        progress_placeholder.markdown(f"""
+        <script>
+        const bar = document.getElementById('load-bar');
+        if (bar) bar.style.width = '{i * (100/30)}%';
+        </script>
+        """, unsafe_allow_html=True)
+        time.sleep(0.1)
+
+    # Remove overlay after loading
+    loading_placeholder.empty()
+    progress_placeholder.empty()
+
+    # ====================================================
+    # ✅ MODEL INFERENCE + RESULTS BOX
+    # ====================================================
     image = Image.open(uploaded_file).convert("RGB")
     species, confidence, probs = predict(image)
+    confidence_percent = confidence * 100
 
     st.success("✅ Analysis complete!")
 
-    col1, col2 = st.columns([1.3, 1])
-    with col1:
-        st.image(image, caption=f"Predicted: {species} ({confidence*100:.1f}%)", use_container_width=True)
-    with col2:
-        # Display prediction results
-        st.metric("Predicted Species", species)
+    st.markdown(
+        f"""
+        <div class="results-box">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <p style="font-size:1.4rem; font-weight:800; color:#0D47A1; margin-bottom:0;">Predicted Species</p>
+                    <p style="font-size:1.2rem; font-weight:700; color:#04365c; margin-top:0;">{species}</p>
+                </div>
+                <div style="text-align:right;">
+                    <p style="font-size:1.4rem; font-weight:800; color:#0D47A1; margin-bottom:0;">Confidence</p>
+                    <p style="font-size:1.2rem; font-weight:700; color:#04365c; margin-top:0;">{confidence_percent:.1f}%</p>
+                    <div style="width:200px; height:10px; background:rgba(0,0,0,0.1); border-radius:8px; overflow:hidden;">
+                        <div style="width:{confidence_percent}%; height:100%;
+                                    background:linear-gradient(to right,#3b82f6,#60a5fa);
+                                    border-radius:8px;"></div>
+                    </div>
+                </div>
+            </div>
+            <div style="text-align:center; margin-top:2rem;">
+                <img src="data:image/png;base64,{base64.b64encode(uploaded_file.getvalue()).decode()}"
+                     style="width:300px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.15);"/>
+                <p style="margin-top:10px; font-weight:600; color:#04365c;">
+                    Predicted: {species} ({confidence_percent:.1f}%)
+                </p>
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
 
-        # Show confidence value and progress bar
-        confidence_percent = confidence * 100
-        st.write(f"**Confidence:** {confidence_percent:.1f}%")
-        st.progress(confidence)
+    fig, ax = plt.subplots(figsize=(4.5, 2.3))
+    ax.barh(CLASSES, probs.numpy() * 100, color="#3b82f6")
+    ax.set_xlabel("Confidence (%)")
+    ax.set_title("Class Probabilities")
+    st.markdown('<div class="results-box">', unsafe_allow_html=True)
+    st.pyplot(fig)
+    st.markdown("</div>", unsafe_allow_html=True)
 
-
-    if show_chart:
-        fig, ax = plt.subplots(figsize=(5, 2.5))
-        ax.bar(CLASSES, probs.numpy() * 100, color="#3b82f6")
-        [ax.spines[i].set_visible(False) for i in ax.spines]
-        ax.tick_params(length = 0)
-        ax.set_xlabel("Confidence (%)")
-        ax.set_title("Class Probabilities")
-        ax.get_yaxis().set_visible(False)
-        st.pyplot(fig)
 else:
     st.info("⬆️ Upload an image to begin classification.")
+st.markdown("""
+<style>
+/* === RESET STREAMLIT UPLOADER STYLING === */
+[data-testid="stFileUploader"] section {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    gap: 20px !important;
+}
+
+[data-testid="stFileUploader"] {
+    position: relative !important;
+    z-index: 50 !important;
+    border-radius: 15px !important;
+    padding: 2rem 1rem !important;
+    background: rgba(255,255,255,0.45) !important;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+/* Hide default gray text */
+[data-testid="stFileUploaderLabel"],
+[data-testid="stFileUploaderDropzoneInstructions"] {
+    display: none !important;
+}
+
+/* === ADD TITLE ABOVE BUTTON === */
+[data-testid="stFileUploader"]::before {
+    content: "Upload Marine Life Photo";
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #0D47A1;
+    display: block;
+    margin-bottom: 1rem;
+}
+
+/* === REBUILD BROWSE BUTTON (REAL BUTTON STYLE) === */
+[data-testid="stFileUploader"] section div div div button {
+    appearance: none !important;
+    display: inline-block !important;
+    border: none !important;
+    outline: none !important;
+    background: linear-gradient(to right, #1565C0, #1E88E5) !important;
+    color: white !important;
+    font-weight: 600 !important;
+    font-size: 1rem !important;
+    padding: 14px 32px !important;
+    border-radius: 10px !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease-in-out !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important;
+    text-transform: none !important;
+}
+
+/* Hover glow */
+[data-testid="stFileUploader"] section div div div button:hover {
+    background: linear-gradient(to right, #0D47A1, #1565C0) !important;
+    transform: scale(1.05);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+}
+
+/* Ensure button text stays visible */
+[data-testid="stFileUploader"] section div div div button * {
+    color: white !important;
+}
+</style>
+""", unsafe_allow_html=True)
