@@ -243,7 +243,7 @@ st.markdown(
         Marine Life Identifier
     </h1>
     <h5 style='text-align:center; color:#37474F;'>
-        Discover the ocean's mysteries. Upload a photo to instantly identify marine species<br>
+        Discover the ocean's mysteries. Upload a photo to instantly identify a benthic species<br>
         with AI-powered recognition.
     </h5>
     """,
