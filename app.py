@@ -4,7 +4,7 @@ from PIL import Image
 import torch
 from torchvision import models, transforms
 import matplotlib.pyplot as plt
-import os, base64, random  # ✅ add this line
+import os, base64, random 
 import time
 import streamlit as st
 from PIL import Image
@@ -509,7 +509,7 @@ if uploaded_file:
     species, confidence, probs = predict(image)
     confidence_percent = confidence * 100
 
-    st.success("✅ Analysis complete!")
+    st.markdown("<div id='results-anchor'></div>", unsafe_allow_html=True)
 
     st.markdown(
         f"""
@@ -548,6 +548,50 @@ if uploaded_file:
     st.markdown('<div class="results-box">', unsafe_allow_html=True)
     st.pyplot(fig)
     st.markdown("</div>", unsafe_allow_html=True)
+
+    import streamlit.components.v1 as components
+
+    components.html("""
+    <script>
+    (function() {
+    // Try multiple selectors in case Streamlit wraps nodes
+    const anchor = window.parent.document.querySelector('#results-anchor')
+                || window.parent.document.querySelector('a[name="results-anchor"]')
+                || window.parent.document.getElementById('results-anchor');
+
+    if (anchor) {
+        anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        // Optional: soft flash to draw attention
+        anchor.style.boxShadow = '0 0 20px rgba(21,101,192,0.6)';
+        setTimeout(() => { anchor.style.boxShadow = 'none'; }, 1200);
+    } else {
+        // Fallback: force hash jump
+        window.parent.location.hash = 'results-anchor';
+    }
+    })();
+    </script>
+    """, height=0, scrolling=False)
+
+
+    # ====================================================
+    # 📜 AUTO-SCROLL TO RESULTS SECTION
+    # ====================================================
+    st.markdown("<a name='results'></a>", unsafe_allow_html=True)
+    st.markdown(
+        """
+        <script>
+        // Scroll smoothly to the results section once results are displayed
+        setTimeout(() => {
+            const element = document.querySelector('.results-box');
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }, 200); // short delay ensures DOM is ready
+        </script>
+        """,
+        unsafe_allow_html=True
+    )
+
 
 else:
     st.info("⬆️ Upload an image to begin classification.")
