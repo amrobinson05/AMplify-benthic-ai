@@ -2,6 +2,7 @@
 import streamlit as st
 from PIL import Image
 import torch
+import torch.nn as nn
 from torchvision import models, transforms
 import matplotlib.pyplot as plt
 import os, base64, random  # ✅ add this line
