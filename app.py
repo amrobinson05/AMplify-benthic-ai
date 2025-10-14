@@ -4,6 +4,7 @@ from PIL import Image
 import torch
 from torchvision import models, transforms
 import matplotlib.pyplot as plt
+import torch.nn as nn
 import os, base64, random  # ✅ add this line
 import time
 import streamlit as st
@@ -355,9 +356,10 @@ with st.sidebar:
 # MODEL SETUP
 CLASSES = ['Eel', 'Scallop', 'Crab', 'Flatfish', 'Roundfish', 'Skate', 'Whelk']
 def load_model():
-    model = models.resnet18(pretrained=False)
-    model.fc = torch.nn.Linear(model.fc.in_features, len(CLASSES))
-    model.load_state_dict(torch.load("benthic_model.pth", map_location="cpu"))
+    model = models.efficientnet_b0(pretrained=False)
+    num_features = model.classifier[1].in_features
+    model.classifier[1] = nn.Linear(num_features, len(CLASSES))
+    model.load_state_dict(torch.load("benthic_model.pth", map_location=torch.device("cpu")))
     model.eval()
     return model
 
@@ -372,7 +374,6 @@ transform = transforms.Compose([
         std=[0.229, 0.224, 0.225]
     )
 ])
-model = load_model()
 
 def predict(image):
     img_tensor = transform(image).unsqueeze(0)
