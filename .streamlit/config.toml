@@ -1,0 +1,6 @@
+[theme]
+primaryColor = "#00796B"  # teal accent
+backgroundColor = "#E0F7FA"  # light aqua
+secondaryBackgroundColor = "#B2DFDB"  # sidebar
+textColor = "#00332E"
+font = "sans serif"
