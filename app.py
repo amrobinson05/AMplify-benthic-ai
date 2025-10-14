@@ -451,7 +451,7 @@ with st.sidebar:
 
 
 # MODEL SETUP
-CLASSES = ["Scallop", "Roundfish", "Crab", "Whelk", "Skate", "Flatfish", "Eel"]
+CLASSES = ['Eel', 'Scallop', 'Crab', 'Flatfish', 'Roundfish', 'Skate', 'Whelk']
 def load_model():
     # Initialize model
     model = models.efficientnet_b0(pretrained=False)
@@ -464,14 +464,14 @@ def load_model():
     return model
 
 transform = transforms.Compose([
-    transforms.Resize((224, 224)),
+    transforms.Resize(256),
+    transforms.CenterCrop(224),
     transforms.ToTensor(),
     transforms.Normalize(
         mean=[0.485, 0.456, 0.406],
         std=[0.229, 0.224, 0.225]
     )
 ])
-
 model = load_model()
 
 def predict(image):
@@ -499,7 +499,7 @@ if uploaded_file:
 
     col1, col2 = st.columns([1.3, 1])
     with col1:
-        st.image(image, caption=f"Predicted: {species} ({confidence*100:.1f}%)", use_container_width=True)
+        st.image(image, caption=f"Predicted: {species} ({confidence*100:.1f}%)", use_column_width =True)
     with col2:
         # Display prediction results
         st.metric("Predicted Species", species)
