@@ -22,6 +22,10 @@ st.set_page_config(
     layout="wide"
 )
 
+# ✅ Initialize session state once
+if "page" not in st.session_state:
+    st.session_state.page = "Home"
+
 # ======================================================
 # HELPER — Convert local image to base64
 # ======================================================
@@ -332,15 +336,18 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-st.markdown(
-    """
-    <div class="tab-bar">
-        <div class="tab">Classification</div>
-        <div class="tab">Detection</div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+st.markdown('<div class="tab-bar">', unsafe_allow_html=True)
+col1, col2, col3 = st.columns(3)
+with col1:
+    if st.button("Home", use_container_width=True):
+        st.session_state.page = "Home"
+with col2:
+    if st.button("Classification", use_container_width=True):
+        st.session_state.page = "Classification"
+with col3:
+    if st.button("Detection", use_container_width=True):
+        st.session_state.page = "Detection"
+st.markdown('</div>', unsafe_allow_html=True)
 
 
 # SIDEBAR
