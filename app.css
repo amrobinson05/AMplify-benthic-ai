@@ -80,33 +80,14 @@ html, body {
   }
 }
 
-/* Streamlit Browse Button styling */
-[data-testid="stFileUploader"] button {
-    background-color: #2563eb !important;
-    color: white !important;
-    width: 140px !important;
-    height: 50px !important;
-    border: none !important;
-    border-radius: 10px !important;
-    font-size: 1rem !important;
-    font-weight: 600 !important;
-    cursor: pointer !important;
-    animation: glowPulse 2.5s ease-in-out infinite;
-    transition: all 0.3s ease;
-}
 
-/* Hover effect for stronger glow */
-[data-testid="stFileUploader"] button:hover {
-    background-color: #1d4ed8 !important;
-    transform: scale(1.05);
-    box-shadow: 0 0 30px rgba(37, 99, 235, 0.8), 0 0 50px rgba(37, 99, 235, 0.6);
-}
 
 /* Hide default Streamlit text inside uploader */
 [data-testid="stFileUploaderLabel"],
 [data-testid="stFileUploaderDropzoneInstructions"] {
     display: none !important;
 }
+
 
 /* Image result card */
 .image-card {
