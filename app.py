@@ -365,6 +365,7 @@ with st.sidebar:
 
 # MODEL SETUP
 CLASSES = ['Eel', 'Scallop', 'Crab', 'Flatfish', 'Roundfish', 'Skate', 'Whelk']
+@st.cache_resource
 def load_model():
     model = models.efficientnet_b0(pretrained=False)
     num_features = model.classifier[1].in_features
