@@ -365,7 +365,6 @@ with st.sidebar:
 
 # MODEL SETUP
 CLASSES = ['Eel', 'Scallop', 'Crab', 'Flatfish', 'Roundfish', 'Skate', 'Whelk']
-@st.cache_resource
 def load_model():
     model = models.efficientnet_b0(pretrained=False)
     num_features = model.classifier[1].in_features
@@ -394,323 +393,353 @@ def predict(image):
         conf, idx = torch.max(probs, 0)
     return CLASSES[idx.item()], conf.item(), probs
 
-# MAIN CONTENT
-st.markdown("""
-<div style='text-align:center; margin-top:2rem;'>
-    <i class="fa-solid fa-upload" style="font-size:55px; color:#1565C0;"></i>
-</div>
-""", unsafe_allow_html=True)
+# ======================================================
+# PAGE ROUTING
+# ======================================================
+if st.session_state.page == "Home":
+    st.markdown("""
+        <div style='text-align:center; margin-top:4rem;'>
+            <h1 style='font-size:3rem; font-weight:800; color:#0D47A1;'>Welcome to Benthic AI 🌊</h1>
+            <p style='font-size:1.2rem; color:#04365c;'>
+                Explore the ocean’s mysteries using AI-powered marine classification and detection.<br><br>
+                Choose <b>Classification</b> to identify species in your photos, or <b>Detection</b> to analyze objects in underwater scenes.
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
 
-uploaded_files = st.file_uploader("", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
+elif st.session_state.page == "Classification":
+    # 🐚 Your original classification logic
+    st.markdown("### 🐚 Classification Page")
 
-import time
+    # MAIN CONTENT
+    st.markdown("""
+    <div style='text-align:center; margin-top:2rem;'>
+        <i class="fa-solid fa-upload" style="font-size:55px; color:#1565C0;"></i>
+    </div>
+    """, unsafe_allow_html=True)
 
-# --- Set global layering once, before the upload logic ---
-st.markdown("""
-<style>
-/* Layer hierarchy for ocean visuals */
-.bubble-container,
-#seagrass-svg,
-.species-container {
-    z-index: 0 !important; /* very back */
-}
+    uploaded_files = st.file_uploader("", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
-/* Upload and result boxes - middle layer */
-[data-testid="stFileUploader"],
-.results-box,
-.results-box-graph {
-    position: relative !important;
-    z-index: 20 !important; /* above kelp/fish */
-}
+    import time
 
-/* Loading overlay - topmost layer */
-#loading-overlay {
-    z-index: 9999 !important;
-}
-</style>
-""", unsafe_allow_html=True)
-
-# =========================================================
-# 📸 MAIN UPLOAD + LOADING + RESULTS SECTION
-# =========================================================
-import time
-
-if uploaded_files:
-    # ====================================================
-    # 🌊 STARFISH LOADING OVERLAY — ALWAYS ON TOP
-    # ====================================================
-    starfish_b64 = base64.b64encode(open("images/starfish.png", "rb").read()).decode()
-
-    # 1️⃣ Define CSS & JS so overlay beats Streamlit’s container stack
+    # --- Set global layering once, before the upload logic ---
     st.markdown("""
     <style>
-    /* BACKGROUND LAYERS */
-    .bubble-container, #seagrass-svg, .species-container {
-        z-index: 0 !important;
+    /* Layer hierarchy for ocean visuals */
+    .bubble-container,
+    #seagrass-svg,
+    .species-container {
+        z-index: 0 !important; /* very back */
     }
 
-    /* MIDDLE LAYERS (Upload + Results) */
-    [data-testid="stFileUploader"], .results-box, .results-box-graph {
+    /* Upload and result boxes - middle layer */
+    [data-testid="stFileUploader"],
+    .results-box,
+    .results-box-graph {
         position: relative !important;
-        z-index: 10 !important;
+        z-index: 20 !important; /* above kelp/fish */
     }
 
-    /* TOP LAYER (Loading Screen) */
+    /* Loading overlay - topmost layer */
     #loading-overlay {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        background: rgba(21, 101, 192, 0.55) !important; /* translucent ocean blue */
-        backdrop-filter: blur(10px) !important;
-        -webkit-backdrop-filter: blur(10px) !important;
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-        z-index: 2147483647 !important; /* 🧱 MAXIMUM possible z-index */
-        pointer-events: all !important;
-    }
-
-    @keyframes spinStar {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
+        z-index: 9999 !important;
     }
     </style>
     """, unsafe_allow_html=True)
 
-    # 2️⃣ Overlay HTML — Injected last (so it’s final in DOM)
-    loading_html = f"""
-    <div id="loading-overlay">
-        <img src="data:image/png;base64,{starfish_b64}"
-             style="width:120px; height:auto; animation:spinStar 2.5s linear infinite;
-                    filter: drop-shadow(0 0 10px rgba(255,255,255,0.8));"/>
-        <p style="font-size:1.8rem; font-weight:700; margin-top:1rem; color:white;">Analyzing Marine Life...</p>
-        <div style="margin-top:1.5rem; width:300px; height:12px; background:rgba(255,255,255,0.3);
-                    border-radius:10px; overflow:hidden;">
-            <div id="load-bar" style="width:0%; height:100%;
-                        background:linear-gradient(to right, #64B5F6, #1565C0);
-                        border-radius:10px;"></div>
-        </div>
-    </div>
-    """
+    # =========================================================
+    # 📸 MAIN UPLOAD + LOADING + RESULTS SECTION
+    # =========================================================
+    import time
 
-    loading_placeholder = st.empty()
-    loading_placeholder.markdown(loading_html, unsafe_allow_html=True)
+    if uploaded_files:
+        # ====================================================
+        # 🌊 STARFISH LOADING OVERLAY — ALWAYS ON TOP
+        # ====================================================
+        starfish_b64 = base64.b64encode(open("images/starfish.png", "rb").read()).decode()
 
-    # 3️⃣ Animate loading bar (3 seconds)
-    progress_placeholder = st.empty()
-    for i in range(31):
-        progress_placeholder.markdown(f"""
-        <script>
-        const bar = document.getElementById('load-bar');
-        if (bar) bar.style.width = '{i * (100/30)}%';
-        </script>
+        # 1️⃣ Define CSS & JS so overlay beats Streamlit’s container stack
+        st.markdown("""
+        <style>
+        /* BACKGROUND LAYERS */
+        .bubble-container, #seagrass-svg, .species-container {
+            z-index: 0 !important;
+        }
+
+        /* MIDDLE LAYERS (Upload + Results) */
+        [data-testid="stFileUploader"], .results-box, .results-box-graph {
+            position: relative !important;
+            z-index: 10 !important;
+        }
+
+        /* TOP LAYER (Loading Screen) */
+        #loading-overlay {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: rgba(21, 101, 192, 0.55) !important; /* translucent ocean blue */
+            backdrop-filter: blur(10px) !important;
+            -webkit-backdrop-filter: blur(10px) !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            z-index: 2147483647 !important; /* 🧱 MAXIMUM possible z-index */
+            pointer-events: all !important;
+        }
+
+        @keyframes spinStar {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        </style>
         """, unsafe_allow_html=True)
-        time.sleep(0.1)
 
-    results_all = []  # store results for all images
+        # 2️⃣ Overlay HTML — Injected last (so it’s final in DOM)
+        loading_html = f"""
+        <div id="loading-overlay">
+            <img src="data:image/png;base64,{starfish_b64}"
+                style="width:120px; height:auto; animation:spinStar 2.5s linear infinite;
+                        filter: drop-shadow(0 0 10px rgba(255,255,255,0.8));"/>
+            <p style="font-size:1.8rem; font-weight:700; margin-top:1rem; color:white;">Analyzing Marine Life...</p>
+            <div style="margin-top:1.5rem; width:300px; height:12px; background:rgba(255,255,255,0.3);
+                        border-radius:10px; overflow:hidden;">
+                <div id="load-bar" style="width:0%; height:100%;
+                            background:linear-gradient(to right, #64B5F6, #1565C0);
+                            border-radius:10px;"></div>
+            </div>
+        </div>
+        """
 
-    total_files = len(uploaded_files)
-    for i, uploaded_img in enumerate(uploaded_files):
-        # Read image
-        img_bytes = uploaded_img.read()
-        image = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-        species, confidence, probs = predict(image)
-        confidence_percent = confidence * 100
+        loading_placeholder = st.empty()
+        loading_placeholder.markdown(loading_html, unsafe_allow_html=True)
 
-        # Store results
-        results_all.append({
-            "filename": uploaded_img.name,
-            "species": species,
-            "confidence": confidence_percent,
-            "probs": probs
-        })
-        if i < 2:
-            b64_img = base64.b64encode(img_bytes).decode()  # use the same bytes
-            st.markdown(
-                f"""
-                <div class="results-box">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div>
-                            <p style="font-size:1.4rem; font-weight:800; color:#0D47A1; margin-bottom:0;">Predicted Species</p>
-                            <p style="font-size:1.2rem; font-weight:700; color:#04365c; margin-top:0;">{species}</p>
-                        </div>
-                        <div style="text-align:right;">
-                            <p style="font-size:1.4rem; font-weight:800; color:#0D47A1; margin-bottom:0;">Confidence</p>
-                            <p style="font-size:1.2rem; font-weight:700; color:#04365c; margin-top:0;">{confidence_percent:.1f}%</p>
-                            <div style="width:200px; height:10px; background:rgba(0,0,0,0.1); border-radius:8px; overflow:hidden;">
-                                <div style="width:{confidence_percent}%; height:100%; background:linear-gradient(to right,#3b82f6,#60a5fa); border-radius:8px;"></div>
+        # 3️⃣ Animate loading bar (3 seconds)
+        progress_placeholder = st.empty()
+        for i in range(31):
+            progress_placeholder.markdown(f"""
+            <script>
+            const bar = document.getElementById('load-bar');
+            if (bar) bar.style.width = '{i * (100/30)}%';
+            </script>
+            """, unsafe_allow_html=True)
+            time.sleep(0.1)
+
+        results_all = []  # store results for all images
+
+        total_files = len(uploaded_files)
+        for i, uploaded_img in enumerate(uploaded_files):
+            # Read image
+            img_bytes = uploaded_img.read()
+            image = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+            species, confidence, probs = predict(image)
+            confidence_percent = confidence * 100
+
+            # Store results
+            results_all.append({
+                "filename": uploaded_img.name,
+                "species": species,
+                "confidence": confidence_percent,
+                "probs": probs
+            })
+            if i < 2:
+                b64_img = base64.b64encode(img_bytes).decode()  # use the same bytes
+                st.markdown(
+                    f"""
+                    <div class="results-box">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div>
+                                <p style="font-size:1.4rem; font-weight:800; color:#0D47A1; margin-bottom:0;">Predicted Species</p>
+                                <p style="font-size:1.2rem; font-weight:700; color:#04365c; margin-top:0;">{species}</p>
+                            </div>
+                            <div style="text-align:right;">
+                                <p style="font-size:1.4rem; font-weight:800; color:#0D47A1; margin-bottom:0;">Confidence</p>
+                                <p style="font-size:1.2rem; font-weight:700; color:#04365c; margin-top:0;">{confidence_percent:.1f}%</p>
+                                <div style="width:200px; height:10px; background:rgba(0,0,0,0.1); border-radius:8px; overflow:hidden;">
+                                    <div style="width:{confidence_percent}%; height:100%; background:linear-gradient(to right,#3b82f6,#60a5fa); border-radius:8px;"></div>
+                                </div>
                             </div>
                         </div>
+                        <div style="text-align:center; margin-top:2rem;">
+                            <img src="data:image/png;base64,{b64_img}"
+                                style="width:300px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.15);"/>
+                            <p style="margin-top:10px; font-weight:600; color:#04365c;">
+                                Predicted: {species} ({confidence_percent:.1f}%)
+                            </p>
+                        </div>
                     </div>
-                    <div style="text-align:center; margin-top:2rem;">
-                        <img src="data:image/png;base64,{b64_img}"
-                            style="width:300px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.15);"/>
-                        <p style="margin-top:10px; font-weight:600; color:#04365c;">
-                            Predicted: {species} ({confidence_percent:.1f}%)
-                        </p>
-                    </div>
-                </div>
-                """,
-                unsafe_allow_html=True
-            )
+                    """,
+                    unsafe_allow_html=True
+                )
 
-    
-    st.success(f"Processed {total_files} images!")
-    # Convert results to DataFrame-friendly format
-    for r in results_all:
-        # Convert tensor to list of floats
-        r["probs"] = [float(p) for p in r["probs"].tolist()]
-
-    
-    # Create DataFrame with columns for each class probability
-    df_results = pd.DataFrame([
-        {
-            "Filename": r["filename"],
-            "Predicted Species": r["species"],
-            "Confidence (%)": round(r["confidence"], 2),
-            **{f"P({cls})": round(prob * 100, 2) for cls, prob in zip(CLASSES, r["probs"])}
-        }
-        for r in results_all
-    ])
-
-    st.write("### 🐚 Classification Results")
-    st.dataframe(df_results, use_container_width=True)
-
-    # Convert DataFrame to downloadable CSV
-    csv = df_results.to_csv(index=False).encode('utf-8')
-
-    # Download button
-    st.download_button(
-        label="Download Results as CSV",
-        data=csv,
-        file_name="classification_results.csv",
-        mime="text/csv"
-    )
         
-    st.write("Results for all images are stored in `Classifications` for later use or download.")
-    st.markdown("<div id='results-anchor'></div>", unsafe_allow_html=True)
+        st.success(f"Processed {total_files} images!")
+        # Convert results to DataFrame-friendly format
+        for r in results_all:
+            # Convert tensor to list of floats
+            r["probs"] = [float(p) for p in r["probs"].tolist()]
 
-    st.markdown("</div>", unsafe_allow_html=True)
-    # Remove overlay after loading
-    loading_placeholder.empty()
-    progress_placeholder.empty()
+        
+        # Create DataFrame with columns for each class probability
+        df_results = pd.DataFrame([
+            {
+                "Filename": r["filename"],
+                "Predicted Species": r["species"],
+                "Confidence (%)": round(r["confidence"], 2),
+                **{f"P({cls})": round(prob * 100, 2) for cls, prob in zip(CLASSES, r["probs"])}
+            }
+            for r in results_all
+        ])
 
-    import streamlit.components.v1 as components
+        st.write("### 🐚 Classification Results")
+        st.dataframe(df_results, use_container_width=True)
 
-    # === SMOOTH AUTO-SCROLL TO RESULTS (clean version) ===
-    components.html("""
-    <script>
-    (function(){
-    const doc = window.parent.document;
-    const target = doc.querySelector('#results-anchor') || doc.querySelector('.results-box');
-    if (!target) return;
-    setTimeout(() => {
-        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        // Optional: flash border glow for visibility
-        target.style.boxShadow = '0 0 20px rgba(21,101,192,0.6)';
-        setTimeout(() => { target.style.boxShadow = 'none'; }, 900);
-    }, 100);
-    })();
-    </script>
-    """, height=0)
+        # Convert DataFrame to downloadable CSV
+        csv = df_results.to_csv(index=False).encode('utf-8')
+
+        # Download button
+        st.download_button(
+            label="Download Results as CSV",
+            data=csv,
+            file_name="classification_results.csv",
+            mime="text/csv"
+        )
+            
+        st.write("Results for all images are stored in `Classifications` for later use or download.")
+        st.markdown("<div id='results-anchor'></div>", unsafe_allow_html=True)
+
+        st.markdown("</div>", unsafe_allow_html=True)
+        # Remove overlay after loading
+        loading_placeholder.empty()
+        progress_placeholder.empty()
+
+        import streamlit.components.v1 as components
+
+        # === SMOOTH AUTO-SCROLL TO RESULTS (clean version) ===
+        components.html("""
+        <script>
+        (function(){
+        const doc = window.parent.document;
+        const target = doc.querySelector('#results-anchor') || doc.querySelector('.results-box');
+        if (!target) return;
+        setTimeout(() => {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            // Optional: flash border glow for visibility
+            target.style.boxShadow = '0 0 20px rgba(21,101,192,0.6)';
+            setTimeout(() => { target.style.boxShadow = 'none'; }, 900);
+        }, 100);
+        })();
+        </script>
+        """, height=0)
 
 
 
 
-else:
-    st.info("⬆️ Upload an image to begin classification.")
-st.markdown("""
-<style>
-/* === RESET STREAMLIT UPLOADER STYLING === */
-[data-testid="stFileUploader"] section {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    text-align: center !important;
-    gap: 20px !important;
-}
+    else:
+        st.info("⬆️ Upload an image to begin classification.")
+    st.markdown("""
+    <style>
+    /* === RESET STREAMLIT UPLOADER STYLING === */
+    [data-testid="stFileUploader"] section {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        text-align: center !important;
+        gap: 20px !important;
+    }
 
-[data-testid="stFileUploader"] {
-    position: relative !important;
-    z-index: 50 !important;
-    border-radius: 15px !important;
-    padding: 2rem 1rem !important;
-    background: rgba(255,255,255,0.45) !important;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-}
+    [data-testid="stFileUploader"] {
+        position: relative !important;
+        z-index: 50 !important;
+        border-radius: 15px !important;
+        padding: 2rem 1rem !important;
+        background: rgba(255,255,255,0.45) !important;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
 
-/* Hide default gray text */
-[data-testid="stFileUploaderLabel"],
-[data-testid="stFileUploaderDropzoneInstructions"] {
-    display: none !important;
-}
+    /* Hide default gray text */
+    [data-testid="stFileUploaderLabel"],
+    [data-testid="stFileUploaderDropzoneInstructions"] {
+        display: none !important;
+    }
 
-/* === ADD TITLE ABOVE BUTTON === */
-[data-testid="stFileUploader"]::before {
-    content: "Upload Marine Life Photo";
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: #0D47A1;
-    display: block;
-    margin-bottom: 1rem;
-}
+    /* === ADD TITLE ABOVE BUTTON === */
+    [data-testid="stFileUploader"]::before {
+        content: "Upload Marine Life Photo";
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #0D47A1;
+        display: block;
+        margin-bottom: 1rem;
+    }
 
-/* === REBUILD BROWSE BUTTON (REAL BUTTON STYLE) === */
-[data-testid="stFileUploader"] section div div div button {
-    appearance: none !important;
-    display: inline-block !important;
-    border: none !important;
-    outline: none !important;
-    background: linear-gradient(to right, #1565C0, #1E88E5) !important;
-    color: white !important;
-    font-weight: 600 !important;
-    font-size: 1rem !important;
-    padding: 14px 32px !important;F
-    border-radius: 10px !important;
-    cursor: pointer !important;
-    transition: all 0.3s ease-in-out !important;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important;
-    text-transform: none !important;
-}
+    /* === REBUILD BROWSE BUTTON (REAL BUTTON STYLE) === */
+    [data-testid="stFileUploader"] section div div div button {
+        appearance: none !important;
+        display: inline-block !important;
+        border: none !important;
+        outline: none !important;
+        background: linear-gradient(to right, #1565C0, #1E88E5) !important;
+        color: white !important;
+        font-weight: 600 !important;
+        font-size: 1rem !important;
+        padding: 14px 32px !important;F
+        border-radius: 10px !important;
+        cursor: pointer !important;
+        transition: all 0.3s ease-in-out !important;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important;
+        text-transform: none !important;
+    }
 
-/* Hover glow */
-[data-testid="stFileUploader"] section div div div button:hover {
-    background: linear-gradient(to right, #0D47A1, #1565C0) !important;
-    transform: scale(1.05);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
-}
+    /* Hover glow */
+    [data-testid="stFileUploader"] section div div div button:hover {
+        background: linear-gradient(to right, #0D47A1, #1565C0) !important;
+        transform: scale(1.05);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+    }
 
-/* Ensure button text stays visible */
-[data-testid="stFileUploader"] section div div div button * {
-    color: white !important;
-}
-</style>
-""", unsafe_allow_html=True)
-st.markdown("""
-<style>
-/* === Fix: Force dataframe above seagrass/fish/bubbles === */
-[data-testid="stDataFrame"] iframe {
-    position: relative !important;
-    z-index: 9999 !important;
-}
+    /* Ensure button text stays visible */
+    [data-testid="stFileUploader"] section div div div button * {
+        color: white !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    st.markdown("""
+    <style>
+    /* === Fix: Force dataframe above seagrass/fish/bubbles === */
+    [data-testid="stDataFrame"] iframe {
+        position: relative !important;
+        z-index: 9999 !important;
+    }
 
-/* Backup: raise whole dataframe container */
-[data-testid="stDataFrame"] {
-    position: relative !important;
-    z-index: 9999 !important;
-}
+    /* Backup: raise whole dataframe container */
+    [data-testid="stDataFrame"] {
+        position: relative !important;
+        z-index: 9999 !important;
+    }
 
-/* Lower background visuals further if needed */
-#seagrass-svg,
-.species-container,
-.bubble-container {
-    z-index: 0 !important;
-}
-</style>
-""", unsafe_allow_html=True)
+    /* Lower background visuals further if needed */
+    #seagrass-svg,
+    .species-container,
+    .bubble-container {
+        z-index: 0 !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+elif st.session_state.page == "Detection":
+    st.markdown("### 🔎 Detection Page")
+    st.info("This page will use the Detection LLM once it's trained.")
+    st.markdown("""
+        <div style='padding: 2rem; background: rgba(255,255,255,0.6);
+                    border-radius: 10px; text-align:center;'>
+            <h3>🚧 Detection model coming soon!</h3>
+            <p>Once your detection model is ready, you'll be able to upload underwater 
+            images here for bounding-box detection and segmentation of marine species.</p>
+        </div>
+    """, unsafe_allow_html=True)
