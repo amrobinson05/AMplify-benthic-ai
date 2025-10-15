@@ -548,12 +548,15 @@ if uploaded_files:
                 """,
                 unsafe_allow_html=True
             )
+
+    
     st.success(f"Processed {total_files} images!")
     # Convert results to DataFrame-friendly format
     for r in results_all:
         # Convert tensor to list of floats
         r["probs"] = [float(p) for p in r["probs"].tolist()]
 
+    
     # Create DataFrame with columns for each class probability
     df_results = pd.DataFrame([
         {
@@ -581,6 +584,8 @@ if uploaded_files:
         
     st.write("Results for all images are stored in `Classifications` for later use or download.")
     st.markdown("<div id='results-anchor'></div>", unsafe_allow_html=True)
+
+    st.markdown("</div>", unsafe_allow_html=True)
     # Remove overlay after loading
     loading_placeholder.empty()
     progress_placeholder.empty()
@@ -676,6 +681,28 @@ st.markdown("""
 /* Ensure button text stays visible */
 [data-testid="stFileUploader"] section div div div button * {
     color: white !important;
+}
+</style>
+""", unsafe_allow_html=True)
+st.markdown("""
+<style>
+/* === Fix: Force dataframe above seagrass/fish/bubbles === */
+[data-testid="stDataFrame"] iframe {
+    position: relative !important;
+    z-index: 9999 !important;
+}
+
+/* Backup: raise whole dataframe container */
+[data-testid="stDataFrame"] {
+    position: relative !important;
+    z-index: 9999 !important;
+}
+
+/* Lower background visuals further if needed */
+#seagrass-svg,
+.species-container,
+.bubble-container {
+    z-index: 0 !important;
 }
 </style>
 """, unsafe_allow_html=True)

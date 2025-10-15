@@ -80,6 +80,15 @@ html, body {
   }
 }
 
+.results-overlay {
+    position: relative;
+    z-index: 9999 !important; /* way above fish/grass */
+    background: rgba(255, 255, 255, 0.8); /* optional frosted look */
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(6px);
+}
 
 
 /* Hide default Streamlit text inside uploader */
