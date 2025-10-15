@@ -628,7 +628,7 @@ st.markdown("""
     color: white !important;
     font-weight: 600 !important;
     font-size: 1rem !important;
-    padding: 14px 32px !important;
+    padding: 14px 32px !important;F
     border-radius: 10px !important;
     cursor: pointer !important;
     transition: all 0.3s ease-in-out !important;
