@@ -557,7 +557,9 @@ if uploaded_files:
     ax.barh(CLASSES, probs.numpy() * 100, color="#052861")
     ax.set_xlabel("Confidence (%)")
     ax.set_title("Class Probabilities")
-    [ax.spines[i].set_visible(False) for i in ax.spines]
+    for spine in ax.spines.values():
+        spine.set_visible(False)
+
     ax.tick_params(length = 0)
     st.markdown('<div class="results-box">', unsafe_allow_html=True)
     st.pyplot(fig)
