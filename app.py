@@ -399,7 +399,6 @@ def predict(image):
 if st.session_state.page == "Home":
     st.markdown("""
         <div style='text-align:center; margin-top:4rem;'>
-            <h1 style='font-size:3rem; font-weight:800; color:#0D47A1;'>Welcome to Benthic AI 🌊</h1>
             <p style='font-size:1.2rem; color:#04365c;'>
                 Explore the ocean’s mysteries using AI-powered marine classification and detection.<br><br>
                 Choose <b>Classification</b> to identify species in your photos, or <b>Detection</b> to analyze objects in underwater scenes.
