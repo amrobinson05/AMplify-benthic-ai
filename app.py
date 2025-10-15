@@ -11,7 +11,7 @@ import time
 import streamlit as st
 from PIL import Image
 import base64
-
+import io
 
 # PAGE CONFIG
 st.set_page_config(
@@ -391,9 +391,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-uploaded_file = st.file_uploader("", type=["jpg", "jpeg", "png"])
-
-
+uploaded_files = st.file_uploader("", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
 import time
 
@@ -427,7 +425,7 @@ st.markdown("""
 # =========================================================
 import time
 
-if uploaded_file:
+if uploaded_files:
     # ====================================================
     # 🌊 STARFISH LOADING OVERLAY — ALWAYS ON TOP
     # ====================================================
@@ -502,48 +500,58 @@ if uploaded_file:
         """, unsafe_allow_html=True)
         time.sleep(0.1)
 
+    results_all = []  # store results for all images
+
+    total_files = len(uploaded_files)
+    for i, uploaded_img in enumerate(uploaded_files):
+        # Read image
+        img_bytes = uploaded_img.read()
+        image = Image.open(io.BytesIO(img_bytes)).convert("RGB")
+        species, confidence, probs = predict(image)
+        confidence_percent = confidence * 100
+
+        # Store results
+        results_all.append({
+            "filename": uploaded_img.name,
+            "species": species,
+            "confidence": confidence_percent,
+            "probs": probs
+        })
+        if i < 3:
+            b64_img = base64.b64encode(img_bytes).decode()  # use the same bytes
+            st.markdown(
+                f"""
+                <div class="results-box">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <p style="font-size:1.4rem; font-weight:800; color:#0D47A1; margin-bottom:0;">Predicted Species</p>
+                            <p style="font-size:1.2rem; font-weight:700; color:#04365c; margin-top:0;">{species}</p>
+                        </div>
+                        <div style="text-align:right;">
+                            <p style="font-size:1.4rem; font-weight:800; color:#0D47A1; margin-bottom:0;">Confidence</p>
+                            <p style="font-size:1.2rem; font-weight:700; color:#04365c; margin-top:0;">{confidence_percent:.1f}%</p>
+                            <div style="width:200px; height:10px; background:rgba(0,0,0,0.1); border-radius:8px; overflow:hidden;">
+                                <div style="width:{confidence_percent}%; height:100%; background:linear-gradient(to right,#3b82f6,#60a5fa); border-radius:8px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="text-align:center; margin-top:2rem;">
+                        <img src="data:image/png;base64,{b64_img}"
+                            style="width:300px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.15);"/>
+                        <p style="margin-top:10px; font-weight:600; color:#04365c;">
+                            Predicted: {species} ({confidence_percent:.1f}%)
+                        </p>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+    st.success(f"Processed {total_files} images!")
+    st.write("Results for all images are stored in `results_all` for later use or download.")
+    st.markdown("<div id='results-anchor'></div>", unsafe_allow_html=True)
     # Remove overlay after loading
     loading_placeholder.empty()
     progress_placeholder.empty()
-
-    # ====================================================
-    # ✅ MODEL INFERENCE + RESULTS BOX
-    # ====================================================
-    image = Image.open(uploaded_file).convert("RGB")
-    species, confidence, probs = predict(image)
-    confidence_percent = confidence * 100
-
-    st.markdown("<div id='results-anchor'></div>", unsafe_allow_html=True)
-
-    st.markdown(
-        f"""
-        <div class="results-box">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <p style="font-size:1.4rem; font-weight:800; color:#0D47A1; margin-bottom:0;">Predicted Species</p>
-                    <p style="font-size:1.2rem; font-weight:700; color:#04365c; margin-top:0;">{species}</p>
-                </div>
-                <div style="text-align:right;">
-                    <p style="font-size:1.4rem; font-weight:800; color:#0D47A1; margin-bottom:0;">Confidence</p>
-                    <p style="font-size:1.2rem; font-weight:700; color:#04365c; margin-top:0;">{confidence_percent:.1f}%</p>
-                    <div style="width:200px; height:10px; background:rgba(0,0,0,0.1); border-radius:8px; overflow:hidden;">
-                        <div style="width:{confidence_percent}%; height:100%;
-                                    background:linear-gradient(to right,#3b82f6,#60a5fa);
-                                    border-radius:8px;"></div>
-                    </div>
-                </div>
-            </div>
-            <div style="text-align:center; margin-top:2rem;">
-                <img src="data:image/png;base64,{base64.b64encode(uploaded_file.getvalue()).decode()}"
-                     style="width:300px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.15);"/>
-                <p style="margin-top:10px; font-weight:600; color:#04365c;">
-                    Predicted: {species} ({confidence_percent:.1f}%)
-                </p>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True
-    )
 
     fig, ax = plt.subplots(figsize=(4, 2))
     ax.barh(CLASSES, probs.numpy() * 100, color="#052861")
