@@ -545,10 +545,12 @@ if uploaded_file:
         unsafe_allow_html=True
     )
 
-    fig, ax = plt.subplots(figsize=(4.5, 2.3))
-    ax.barh(CLASSES, probs.numpy() * 100, color="#3b82f6")
+    fig, ax = plt.subplots(figsize=(4, 2))
+    ax.barh(CLASSES, probs.numpy() * 100, color="#052861")
     ax.set_xlabel("Confidence (%)")
     ax.set_title("Class Probabilities")
+    [ax.spines[i].set_visible(False) for i in ax.spines]
+    ax.tick_params(length = 0)
     st.markdown('<div class="results-box">', unsafe_allow_html=True)
     st.pyplot(fig)
     st.markdown("</div>", unsafe_allow_html=True)
