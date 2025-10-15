@@ -37,7 +37,7 @@ html, body {
     border: 4px dotted rgba(255, 255, 255, 0.8) !important; /* thicker, brighter dotted border */
     border-radius: 16px !important;
     width: 60% !important;
-    height: 350px !important;
+    height: 400px !important;
     margin: 2rem auto !important;
     display: flex !important;
     flex-direction: column !important;
