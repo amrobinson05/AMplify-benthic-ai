@@ -520,7 +520,7 @@ if uploaded_files:
             "confidence": confidence_percent,
             "probs": probs
         })
-        if i < 3:
+        if i < 2:
             b64_img = base64.b64encode(img_bytes).decode()  # use the same bytes
             st.markdown(
                 f"""
