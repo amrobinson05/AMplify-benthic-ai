@@ -332,16 +332,17 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# WHITE BAR WITH TWO SECTIONS
 st.markdown(
     """
     <div class="tab-bar">
         <div class="tab">Classification</div>
         <div class="tab">Detection</div>
+        <div class="tab">Collection</div>
     </div>
     """,
     unsafe_allow_html=True
 )
+
 
 # SIDEBAR
 with st.sidebar:
