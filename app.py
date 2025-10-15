@@ -12,6 +12,8 @@ import streamlit as st
 from PIL import Image
 import base64
 import io
+import pandas as pd
+
 
 # PAGE CONFIG
 st.set_page_config(
@@ -547,25 +549,41 @@ if uploaded_files:
                 unsafe_allow_html=True
             )
     st.success(f"Processed {total_files} images!")
-    st.write("Results for all images are stored in `results_all` for later use or download.")
+    # Convert results to DataFrame-friendly format
+    for r in results_all:
+        # Convert tensor to list of floats
+        r["probs"] = [float(p) for p in r["probs"].tolist()]
+
+    # Create DataFrame with columns for each class probability
+    df_results = pd.DataFrame([
+        {
+            "Filename": r["filename"],
+            "Predicted Species": r["species"],
+            "Confidence (%)": round(r["confidence"], 2),
+            **{f"P({cls})": round(prob * 100, 2) for cls, prob in zip(CLASSES, r["probs"])}
+        }
+        for r in results_all
+    ])
+
+    st.write("### 🐚 Classification Results")
+    st.dataframe(df_results, use_container_width=True)
+
+    # Convert DataFrame to downloadable CSV
+    csv = df_results.to_csv(index=False).encode('utf-8')
+
+    # Download button
+    st.download_button(
+        label="Download Results as CSV",
+        data=csv,
+        file_name="classification_results.csv",
+        mime="text/csv"
+    )
+        
+    st.write("Results for all images are stored in `Classifications` for later use or download.")
     st.markdown("<div id='results-anchor'></div>", unsafe_allow_html=True)
     # Remove overlay after loading
     loading_placeholder.empty()
     progress_placeholder.empty()
-
-    fig, ax = plt.subplots(figsize=(4, 2))
-    ax.barh(CLASSES, probs.numpy() * 100, color="#052861")
-    ax.set_xlabel("Confidence (%)")
-    ax.set_title("Class Probabilities")
-    for spine in ax.spines.values():
-        spine.set_visible(False)
-
-    ax.tick_params(length = 0)
-    st.markdown('<div class="results-box">', unsafe_allow_html=True)
-    st.pyplot(fig)
-    st.markdown("</div>", unsafe_allow_html=True)
-
-
 
     import streamlit.components.v1 as components
 
