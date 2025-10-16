@@ -399,14 +399,35 @@ def predict(image):
 # ======================================================
 if st.session_state.page == "Home":
     st.markdown("""
-        <div style='text-align:center; margin-top:4rem;'>
-            <h1 style='font-size:3rem; font-weight:800; color:#0D47A1;'>Welcome to Benthic AI 🌊</h1>
-            <p style='font-size:1.2rem; color:#04365c;'>
-                Explore the ocean’s mysteries using AI-powered marine classification and detection.<br><br>
-                Choose <b>Classification</b> to identify species in your photos, or <b>Detection</b> to analyze objects in underwater scenes.
-            </p>
+        <div style="
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 5rem;
+        ">
+            <div style="
+                background: rgba(255, 255, 255, 0.6);
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                border-radius: 18px;
+                box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+                padding: 2.5rem 3rem;
+                max-width: 800px;
+                text-align: center;
+                color: #04365c;
+            ">
+                <h1 style="font-size: 2.6rem; font-weight: 800; color: #0D47A1; margin-bottom: 1rem;">
+                    Welcome to Benthic AI 🌊
+                </h1>
+                <p style="font-size: 1.2rem; line-height: 1.7;">
+                    Explore the ocean’s mysteries using AI-powered marine classification and detection.<br><br>
+                    Choose <b>Classification</b> to identify species in your photos, or <b>Detection</b> 
+                    to analyze objects in underwater scenes.
+                </p>
+            </div>
         </div>
     """, unsafe_allow_html=True)
+
 
 elif st.session_state.page == "Classification":
     # 🐚 Your original classification logic
