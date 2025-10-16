@@ -556,16 +556,28 @@ elif st.session_state.page == "Classification":
         loading_placeholder = st.empty()
         loading_placeholder.markdown(loading_html, unsafe_allow_html=True)
 
-        # 3️⃣ Animate loading bar (3 seconds)
-        progress_placeholder = st.empty()
+
         for i in range(31):
-            progress_placeholder.markdown(f"""
-            <script>
-            const bar = document.getElementById('load-bar');
-            if (bar) bar.style.width = '{i * (100/30)}%';
-            </script>
+            progress = i * (100 / 30)
+            loading_placeholder.markdown(f"""
+                <div id="loading-overlay">
+                    <img src="data:image/png;base64,{starfish_b64}"
+                        style="width:120px; height:auto; animation:spinStar 2.5s linear infinite;
+                                filter: drop-shadow(0 0 10px rgba(255,255,255,0.8));"/>
+                    <p style="font-size:1.8rem; font-weight:700; margin-top:1rem; color:white;">
+                        Analyzing Marine Life... {progress:.0f}%
+                    </p>
+                    <div style="margin-top:1.5rem; width:300px; height:12px; background:rgba(255,255,255,0.3);
+                                border-radius:10px; overflow:hidden;">
+                        <div style="width:{progress}%; height:100%;
+                                    background:linear-gradient(to right, #64B5F6, #1565C0);
+                                    border-radius:10px;"></div>
+                    </div>
+                </div>
             """, unsafe_allow_html=True)
-            time.sleep(0.1)
+            time.sleep(0.03)
+
+        loading_placeholder.empty()
 
         results_all = []  # store results for all images
 
@@ -716,7 +728,6 @@ elif st.session_state.page == "Classification":
         st.markdown("</div>", unsafe_allow_html=True)
         # Remove overlay after loading
         loading_placeholder.empty()
-        progress_placeholder.empty()
 
         import streamlit.components.v1 as components
 
