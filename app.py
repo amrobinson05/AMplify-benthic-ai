@@ -566,7 +566,7 @@ elif st.session_state.page == "Classification":
                 "confidence": confidence_percent,
                 "probs": probs
             })
-            if i < 2:
+            if i < 1:
                 b64_img = base64.b64encode(img_bytes).decode()  # use the same bytes
                 st.markdown(
                     f"""
@@ -764,7 +764,7 @@ elif st.session_state.page == "Detection":
     
     detection_model = load_detection_model()
     st.info("Upload an image")
-    uploaded_file = st.file_uploader("Upload an underwater image", type=["jpg","jpeg","png"])
+    uploaded_file = st.file_uploader("Upload an underwater image", type=["jpg","jpeg","png"], accept_multiple_files=True)
     if uploaded_file:
        
 
