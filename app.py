@@ -294,6 +294,20 @@ page_heading = {
     "Detection": "Detection Model"
 }[st.session_state.page]
 
+description = ""
+if st.session_state.page == "Home":
+    description = "Discover the ocean's mysteries. Classify benthic species in underwater images with AI-powered recognition."
+elif st.session_state.page == "Classification":
+    description = (
+        "Use this model to identify marine life in underwater photos. "
+        "It classifies images into seven benthic species: crab, eel, whelk, scallop, flatfish, roundfish, and skate."
+    )
+elif st.session_state.page == "Detection":
+    description = (
+        "Use this model to locate and label marine species in underwater images by "
+        "drawing bounding boxes around detected organisms and identifying their species."
+    )
+
 st.markdown(f"""
     <style>
     .gradient-text {{
@@ -312,14 +326,11 @@ st.markdown(f"""
     <div style='text-align:center;'>
         <span class='gradient-text'>{page_heading}</span>
         <h5 style='text-align:center; color:#37474F;'>
-            {(
-                "Discover the ocean's mysteries. Classify benthic species in underwater images with AI-powered recognition."
-                if st.session_state.page == "Home"
-                else "Use this model to analyze marine images and detect or classify benthic species."
-            )}
+            {description}
         </h5>
     </div>
 """, unsafe_allow_html=True)
+
 
 
 
@@ -384,7 +395,7 @@ def load_model():
     model = models.efficientnet_b0(pretrained=False)
     num_features = model.classifier[1].in_features
     model.classifier[1] = nn.Linear(num_features, len(CLASSES))
-    model.load_state_dict(torch.load("benthic_model.pth", map_location=torch.device("cpu")))
+    model.load_state_dict(torch.load("models/benthic_model.pth", map_location=torch.device("cpu")))
     model.eval()
     return model
 
@@ -823,7 +834,7 @@ elif st.session_state.page == "Detection":
     @st.cache_resource
     def load_detection_model():
         from ultralytics import YOLO
-        return YOLO("detection_model.pt")  # path to your model
+        return YOLO("models/detection_model.pt")  # path to your model
     
     detection_model = load_detection_model()
     st.info("Upload an image")
