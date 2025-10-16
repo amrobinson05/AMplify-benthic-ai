@@ -484,23 +484,31 @@ if st.session_state.page == "Home":
                 backdrop-filter: blur(10px);
                 -webkit-backdrop-filter: blur(10px);
                 border-radius: 18px;
-                box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+                box-shadow: 0 8px 25px rgba(0,0,0,0.3);
                 padding: 2.5rem 3rem;
                 max-width: 800px;
                 text-align: center;
                 color: #04365c;
             ">
-                <h1 style="font-size: 2.6rem; font-weight: 800; color: #0D47A1; margin-bottom: 1rem;">
+                <h1 style="font-size: 2.6rem; font-weight: 800; color: #0D47A1; margin-bottom: 0.4rem;">
                     Welcome to AMplify AI 🌊
                 </h1>
+                <p style="font-size: 1rem; color: #1565C0; margin-bottom: 1.8rem;">
+                    <b>Created by:</b> Ariana Robinson &amp; Megan Timmes<br>
+                    <span style="font-size: 0.95rem; color: #04365c;">
+                        William &amp; Mary AI Case-a-thon — Fall 2025
+                    </span>
+                </p>
                 <p style="font-size: 1.2rem; line-height: 1.7;">
-                    We offer <b>2</b> finetuned deep-learning models for marine life classification and detection.<br><br>
-                    Choose our <b>Classification</b> model to identify benthic species in your photos, or our <b>Detection</b> model
-                    to box and classify the benthic species in underwater scenes.
+                    We offer <b>2</b> fine-tuned deep learning models for marine life
+                    <b>classification</b> and <b>detection</b>.<br><br>
+                    Use the <b>Classification</b> model to identify benthic species in your photos,
+                    or the <b>Detection</b> model to locate and label organisms in full underwater scenes.
                 </p>
             </div>
         </div>
     """, unsafe_allow_html=True)
+
 
 
 elif st.session_state.page == "Classification":
