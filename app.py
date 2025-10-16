@@ -134,45 +134,55 @@ html, body, [data-testid="stAppViewContainer"] {
 }
 </style>
 """, unsafe_allow_html=True)
+
+
+# ======== SEAGRASS ========
 st.markdown("""
 <style>
-/* 🧭 Bring the main Streamlit content above the animated layers */
-[data-testid="stAppViewContainer"] .main, 
-.block-container, 
-.stFileUploader, 
-button, 
-div[data-testid="stMarkdownContainer"] {
-    position: relative;
-    z-index: 10 !important;
+#seagrass-svg {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100vw;
+  height: 420px;
+  z-index: 1;
+  pointer-events: none;
 }
 </style>
 """, unsafe_allow_html=True)
+
+# ======== FIX: Keep seagrass behind everything ========
 st.markdown("""
 <style>
-/* Lower the animation layers */
 .bubble-container,
-#seagrass-svg,
 .species-container {
-    z-index: 0 !important;
+    z-index: 0 !important; /* behind everything */
 }
 
-/* Keep Streamlit UI (buttons, uploader, images, etc.) above everything */
+#seagrass-svg {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 420px !important;
+    z-index: -10 !important; /* always below everything */
+    pointer-events: none !important;
+}
+
 [data-testid="stAppViewContainer"] .main {
     position: relative;
     z-index: 10 !important;
 }
 
-/* Also ensure file uploader and output text stay above visuals */
 [data-testid="stFileUploader"],
 [data-testid="stImage"],
 [data-testid="stVerticalBlock"] {
     position: relative;
     z-index: 15 !important;
 }
-            
-
 </style>
 """, unsafe_allow_html=True)
+
 
 # ======================================================
 # SEAGRASS + KELP BALLS
