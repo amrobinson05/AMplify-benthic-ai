@@ -23,9 +23,18 @@ st.set_page_config(
     layout="wide"
 )
 
+
+
 # ✅ Initialize session state once
 if "page" not in st.session_state:
     st.session_state.page = "Home"
+
+# Dynamic page title based on selected tab
+page_titles = {
+    "Home": "Benthic Species Identifier",
+    "Classification": "Classification Model",
+    "Detection": "Detection Model"
+}
 
 # ======================================================
 # HELPER — Convert local image to base64
@@ -266,12 +275,17 @@ st.markdown(fish_html, unsafe_allow_html=True)
 with open("app.css") as f:
     st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
+from streamlit import rerun
 
+page_heading = {
+    "Home": "Benthic Species Identifier",
+    "Classification": "Classification Model",
+    "Detection": "Detection Model"
+}[st.session_state.page]
 
-st.markdown(
-    """
+st.markdown(f"""
     <style>
-    .gradient-text {
+    .gradient-text {{
         font-size: 70px;
         font-weight: 800;
         text-align: center;
@@ -279,22 +293,22 @@ st.markdown(
         -webkit-background-clip: text;
         background-clip: text;
         -webkit-text-fill-color: transparent;
-        color: transparent;
         display: inline-block;
         margin-bottom: 10px;
-    }
+    }}
     </style>
 
     <div style='text-align:center;'>
-        <span class='gradient-text'>Benthic Species Identifier</span>
+        <span class='gradient-text'>{page_heading}</span>
         <h5 style='text-align:center; color:#37474F;'>
-            Discover the ocean's mysteries. Upload a photo to instantly identify a benthic species<br>
-            with AI-powered recognition.
+            {(
+                "Discover the ocean's mysteries. Upload a photo to instantly identify a benthic species with AI-powered recognition."
+                if st.session_state.page == "Home"
+                else "Use this model to analyze marine images and detect or classify benthic species."
+            )}
         </h5>
     </div>
-    """,
-    unsafe_allow_html=True
-)
+""", unsafe_allow_html=True)
 
 
 
@@ -303,20 +317,21 @@ st.markdown(
 if "page" not in st.session_state:
     st.session_state.page = "Home"
 
-
-# --- Render button bar ---
 st.markdown('<div class="tab-bar">', unsafe_allow_html=True)
 col1, col2, col3 = st.columns(3)
 
 with col1:
     if st.button("Home", use_container_width=True):
         st.session_state.page = "Home"
+        rerun()
 with col2:
     if st.button("Classification", use_container_width=True):
         st.session_state.page = "Classification"
+        rerun()
 with col3:
     if st.button("Detection", use_container_width=True):
         st.session_state.page = "Detection"
+        rerun()
 
 st.markdown('</div>', unsafe_allow_html=True)
 
