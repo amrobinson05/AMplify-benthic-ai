@@ -569,6 +569,53 @@ elif st.session_state.page == "Classification":
 
         results_all = []  # store results for all images
 
+        # === Species Info Database ===
+        species_info = {
+            "Scallop": {
+                "Habitat": "Sandy or gravel seafloor, often near tidal currents",
+                "Depth Range": "5–100 m",
+                "Fun Fact": "Scallops can swim by clapping their shells rapidly!",
+                "Description": "Bivalve mollusks with fan-shaped shells that rest on the seafloor and filter-feed plankton."
+            },
+            "Crab": {
+                "Habitat": "Rocky reefs, sandy bottoms, and seagrass beds",
+                "Depth Range": "0–300 m",
+                "Fun Fact": "Crabs communicate by drumming or waving their claws.",
+                "Description": "Decapod crustaceans with hard exoskeletons, two pincers, and sideways movement."
+            },
+            "Eel": {
+                "Habitat": "Burrows in sand or mud; rocky crevices",
+                "Depth Range": "10–400 m",
+                "Fun Fact": "Eels can swim both forwards and backwards!",
+                "Description": "Elongated fish with snake-like bodies that hide in sediment or rocks, emerging to hunt at night."
+            },
+            "Flatfish": {
+                "Habitat": "Sandy or muddy seafloor, often near estuaries",
+                "Depth Range": "0–200 m",
+                "Fun Fact": "Flatfish are born symmetrical but one eye migrates to the other side as they mature.",
+                "Description": "Bottom-dwelling fish that camouflage perfectly with sediment, lying flat on one side."
+            },
+            "Roundfish": {
+                "Habitat": "Open water above reefs or rocky areas",
+                "Depth Range": "5–250 m",
+                "Fun Fact": "Roundfish have a more cylindrical shape, unlike flatfish or skates.",
+                "Description": "Typical fish-shaped species with a lateral line, adapted for swimming in open water."
+            },
+            "Skate": {
+                "Habitat": "Soft sediment and sandy seabeds",
+                "Depth Range": "20–500 m",
+                "Fun Fact": "Skates are related to rays and lay egg cases called 'mermaid’s purses'.",
+                "Description": "Flat-bodied cartilaginous fish with long tails and large pectoral fins used for gliding along the seafloor."
+            },
+            "Whelk": {
+                "Habitat": "Cold, shallow waters with sand or mud substrate",
+                "Depth Range": "0–200 m",
+                "Fun Fact": "Whelks drill holes in shells of prey using a toothed tongue called a radula.",
+                "Description": "Predatory sea snails with spiral shells that feed on bivalves and other invertebrates."
+            }
+        }
+
+
         total_files = len(uploaded_files)
         for i, uploaded_img in enumerate(uploaded_files):
             # Read image
@@ -585,34 +632,50 @@ elif st.session_state.page == "Classification":
                 "probs": probs
             })
             if i < 1:
-                b64_img = base64.b64encode(img_bytes).decode()  # use the same bytes
+                b64_img = base64.b64encode(img_bytes).decode()
+                info = species_info.get(species, None)
+
                 st.markdown(
                     f"""
-                    <div class="results-box">
-                        <div style="display:flex; justify-content:space-between; align-items:center;">
-                            <div>
-                                <p style="font-size:1.4rem; font-weight:800; color:#0D47A1; margin-bottom:0;">Predicted Species</p>
-                                <p style="font-size:1.2rem; font-weight:700; color:#04365c; margin-top:0;">{species}</p>
-                            </div>
-                            <div style="text-align:right;">
-                                <p style="font-size:1.4rem; font-weight:800; color:#0D47A1; margin-bottom:0;">Confidence</p>
-                                <p style="font-size:1.2rem; font-weight:700; color:#04365c; margin-top:0;">{confidence_percent:.1f}%</p>
-                                <div style="width:200px; height:10px; background:rgba(0,0,0,0.1); border-radius:8px; overflow:hidden;">
-                                    <div style="width:{confidence_percent}%; height:100%; background:linear-gradient(to right,#3b82f6,#60a5fa); border-radius:8px;"></div>
+                    <div class="results-box" style="
+                        background: rgba(255,255,255,0.6);
+                        border-radius: 18px;
+                        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+                        padding: 2rem;
+                        margin-top: 2rem;
+                    ">
+                        <div style="display:flex; gap:2rem; align-items:center; justify-content:center; flex-wrap:wrap;">
+                            <!-- Left: Image -->
+                            <div style="flex:1; min-width:280px; text-align:center;">
+                                <img src="data:image/png;base64,{b64_img}" 
+                                    style="width:300px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.15);" />
+                                <p style="margin-top:10px; font-weight:600; color:#04365c;">
+                                    Predicted: {species} ({confidence_percent:.1f}%)
+                                </p>
+                                <div style="width:200px; height:10px; background:rgba(0,0,0,0.1); border-radius:8px; overflow:hidden; margin:auto;">
+                                    <div style="width:{confidence_percent}%; height:100%;
+                                        background:linear-gradient(to right,#3b82f6,#60a5fa);
+                                        border-radius:8px;">
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div style="text-align:center; margin-top:2rem;">
-                            <img src="data:image/png;base64,{b64_img}"
-                                style="width:300px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.15);"/>
-                            <p style="margin-top:10px; font-weight:600; color:#04365c;">
-                                Predicted: {species} ({confidence_percent:.1f}%)
-                            </p>
+                            <div style="flex:1; min-width:300px;">
+                                <h3 style="color:#0D47A1; font-weight:800; margin-bottom:0.5rem;">
+                                    🌊 About the {species}
+                                </h3>
+                                <p style="margin:0.3rem 0;"><b>Habitat:</b> {info['Habitat'] if info else 'N/A'}</p>
+                                <p style="margin:0.3rem 0;"><b>Depth Range:</b> {info['Depth Range'] if info else 'N/A'}</p>
+                                <p style="margin:0.3rem 0;"><b>Fun Fact:</b> {info['Fun Fact'] if info else 'N/A'}</p>
+                                <p style="margin:0.3rem 0;"><b>Description:</b> {info['Description'] if info else 'N/A'}</p>
+                            </div>
                         </div>
                     </div>
                     """,
                     unsafe_allow_html=True
                 )
+
+
+
 
         
         st.success(f"Processed {total_files} images!")
