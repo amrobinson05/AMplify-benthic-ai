@@ -448,8 +448,6 @@ if st.session_state.page == "Home":
 
 
 elif st.session_state.page == "Classification":
-    # 🐚 Your original classification logic
-    st.markdown("### 🐚 Classification Page")
 
     # MAIN CONTENT
     st.markdown("""
@@ -708,7 +706,7 @@ elif st.session_state.page == "Classification":
             for r in results_all
         ])
 
-        st.write("### 🐚 Classification Results")
+        st.write("### Classification Results")
         st.dataframe(df_results, use_container_width=True)
 
         # Convert DataFrame to downloadable CSV
@@ -749,10 +747,6 @@ elif st.session_state.page == "Classification":
         """, height=0)
 
 
-
-
-    else:
-        st.info("⬆️ Upload an image to begin classification.")
     st.markdown("""
     <style>
     /* === RESET STREAMLIT UPLOADER STYLING === */
@@ -847,7 +841,6 @@ elif st.session_state.page == "Classification":
     """, unsafe_allow_html=True)
 
 elif st.session_state.page == "Detection":
-    st.markdown("### Detection Page")
 
     @st.cache_resource
     def load_detection_model():
