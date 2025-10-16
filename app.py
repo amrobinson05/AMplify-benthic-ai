@@ -631,48 +631,18 @@ elif st.session_state.page == "Classification":
                 "confidence": confidence_percent,
                 "probs": probs
             })
-            if i < 1:
-                b64_img = base64.b64encode(img_bytes).decode()
-                info = species_info.get(species, None)
 
-                st.markdown(
-                    f"""
-                    <div class="results-box" style="
-                        background: rgba(255,255,255,0.6);
-                        border-radius: 18px;
-                        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-                        padding: 2rem;
-                        margin-top: 2rem;
-                    ">
-                        <div style="display:flex; gap:2rem; align-items:center; justify-content:center; flex-wrap:wrap;">
-                            <!-- Left: Image -->
-                            <div style="flex:1; min-width:280px; text-align:center;">
-                                <img src="data:image/png;base64,{b64_img}" 
-                                    style="width:300px; border-radius:12px; box-shadow:0 4px 10px rgba(0,0,0,0.15);" />
-                                <p style="margin-top:10px; font-weight:600; color:#04365c;">
-                                    Predicted: {species} ({confidence_percent:.1f}%)
-                                </p>
-                                <div style="width:200px; height:10px; background:rgba(0,0,0,0.1); border-radius:8px; overflow:hidden; margin:auto;">
-                                    <div style="width:{confidence_percent}%; height:100%;
-                                        background:linear-gradient(to right,#3b82f6,#60a5fa);
-                                        border-radius:8px;">
-                                    </div>
-                                </div>
-                            </div>
-                            <div style="flex:1; min-width:300px;">
-                                <h3 style="color:#0D47A1; font-weight:800; margin-bottom:0.5rem;">
-                                    🌊 About the {species}
-                                </h3>
-                                <p style="margin:0.3rem 0;"><b>Habitat:</b> {info['Habitat'] if info else 'N/A'}</p>
-                                <p style="margin:0.3rem 0;"><b>Depth Range:</b> {info['Depth Range'] if info else 'N/A'}</p>
-                                <p style="margin:0.3rem 0;"><b>Fun Fact:</b> {info['Fun Fact'] if info else 'N/A'}</p>
-                                <p style="margin:0.3rem 0;"><b>Description:</b> {info['Description'] if info else 'N/A'}</p>
-                            </div>
-                        </div>
-                    </div>
-                    """,
-                    unsafe_allow_html=True
-                )
+            from components.result_box import render_results_box
+
+# ... inside your loop, where you currently render the HTML ...
+            if i < 1:
+                render_results_box(
+                    image_bytes=img_bytes,
+                    species=species,
+                    confidence_percent=confidence_percent,
+                    species_info=species_info,   # you already have this dict
+    )
+
 
 
 
@@ -835,18 +805,27 @@ elif st.session_state.page == "Detection":
     def load_detection_model():
         from ultralytics import YOLO
         return YOLO("models/detection_model.pt")  # path to your model
-    
+
     detection_model = load_detection_model()
     st.info("Upload an image")
-    uploaded_file = st.file_uploader("Upload an underwater image", type=["jpg","jpeg","png"], accept_multiple_files=True)
+    uploaded_file = st.file_uploader(
+        "Upload an underwater image",
+        type=["jpg", "jpeg", "png"],
+        accept_multiple_files=True
+    )
+
     if uploaded_file:
         from components.loading_overlay import show_loading_overlay
+        from components.result_box import render_results_box
+        import base64
+        from io import BytesIO
+
         show_loading_overlay("Running Detection Model...", duration=1.0)
 
         results_data = []
 
         for i, uploaded_img in enumerate(uploaded_file):
-            # Read image
+            # Read and preprocess image
             image = Image.open(uploaded_img).convert("RGB")
             img_np = np.array(image)
 
@@ -854,14 +833,39 @@ elif st.session_state.page == "Detection":
             results = detection_model.predict(img_np)
             result = results[0]
 
-            # Draw bounding boxes
+            # Draw bounding boxes (NumPy image)
             results_img = result.plot()
 
-            # Display image and results
+            # === Convert annotated image (with boxes) to base64 ===
+            results_pil = Image.fromarray(results_img)
+            buffer = BytesIO()
+            results_pil.save(buffer, format="PNG")
+            results_b64 = base64.b64encode(buffer.getvalue()).decode()
+
+            # === Extract top detection info ===
+            def get_top_detection(result, names_map):
+                """Return (label, confidence%) for top detection."""
+                if not hasattr(result, "boxes") or result.boxes is None or len(result.boxes) == 0:
+                    return None, None
+                confs = result.boxes.conf.cpu().numpy()
+                idx = confs.argmax()
+                top_conf = float(confs[idx])
+                cls_id = int(result.boxes.cls[idx])
+                label = names_map.get(cls_id, f"class_{cls_id}")
+                return label, top_conf * 100.0
+
+            detected_species, conf_percent = get_top_detection(result, detection_model.names)
+
+            # === Show results box for first image ===
             if i == 0:
-                results_img = result.plot()
-                st.image(results_img, caption=f"Predictions for {uploaded_img.name}", use_column_width=True)
-            # Extract detections
+                render_results_box(
+                    image_bytes=base64.b64decode(results_b64),  # ✅ annotated image
+                    species=detected_species or "No objects detected",
+                    confidence_percent=conf_percent or 0.0,
+                    species_info=None
+                )
+
+            # === Extract all detections for the table ===
             boxes = result.boxes
             for box in boxes:
                 cls_id = int(box.cls[0])
@@ -875,10 +879,12 @@ elif st.session_state.page == "Detection":
                     "Bounding Box": [round(x, 2) for x in xyxy]
                 })
 
-        # Convert to DataFrame
+        # === Create results table ===
         df_results = pd.DataFrame(results_data)
         st.write("### 🐚 Detection Results")
         st.dataframe(df_results, use_container_width=True)
+
+        # === Summary by class ===
         summary_df = (
             df_results.groupby("Class")
             .size()
@@ -886,10 +892,10 @@ elif st.session_state.page == "Detection":
             .sort_values(by="Total Detections", ascending=False)
             .reset_index(drop=True)
         )
-
         st.dataframe(summary_df, use_container_width=True)
-        # CSV Download
-        csv = df_results.to_csv(index=False).encode('utf-8')
+
+        # === CSV Download ===
+        csv = df_results.to_csv(index=False).encode("utf-8")
         st.download_button(
             label="Download Results as CSV",
             data=csv,
