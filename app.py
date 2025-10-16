@@ -180,6 +180,7 @@ st.markdown("""
     position: relative;
     z-index: 15 !important;
 }
+        
 </style>
 """, unsafe_allow_html=True)
 
@@ -551,31 +552,9 @@ elif st.session_state.page == "Classification":
         </div>
         """
 
-        loading_placeholder = st.empty()
-        loading_placeholder.markdown(loading_html, unsafe_allow_html=True)
+        from components.loading_overlay import show_loading_overlay
+        show_loading_overlay("Analyzing Marine Life...", duration=1.0)
 
-
-        for i in range(31):
-            progress = i * (100 / 30)
-            loading_placeholder.markdown(f"""
-                <div id="loading-overlay">
-                    <img src="data:image/png;base64,{starfish_b64}"
-                        style="width:120px; height:auto; animation:spinStar 2.5s linear infinite;
-                                filter: drop-shadow(0 0 10px rgba(255,255,255,0.8));"/>
-                    <p style="font-size:1.8rem; font-weight:700; margin-top:1rem; color:white;">
-                        Analyzing Marine Life... {progress:.0f}%
-                    </p>
-                    <div style="margin-top:1.5rem; width:300px; height:12px; background:rgba(255,255,255,0.3);
-                                border-radius:10px; overflow:hidden;">
-                        <div style="width:{progress}%; height:100%;
-                                    background:linear-gradient(to right, #64B5F6, #1565C0);
-                                    border-radius:10px;"></div>
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
-            time.sleep(0.03)
-
-        loading_placeholder.empty()
 
         results_all = []  # store results for all images
 
@@ -724,8 +703,7 @@ elif st.session_state.page == "Classification":
         st.markdown("<div id='results-anchor'></div>", unsafe_allow_html=True)
 
         st.markdown("</div>", unsafe_allow_html=True)
-        # Remove overlay after loading
-        loading_placeholder.empty()
+        
 
         import streamlit.components.v1 as components
 
@@ -851,6 +829,9 @@ elif st.session_state.page == "Detection":
     st.info("Upload an image")
     uploaded_file = st.file_uploader("Upload an underwater image", type=["jpg","jpeg","png"], accept_multiple_files=True)
     if uploaded_file:
+        from components.loading_overlay import show_loading_overlay
+        show_loading_overlay("Running Detection Model...", duration=1.0)
+
         results_data = []
 
         for i, uploaded_img in enumerate(uploaded_file):
