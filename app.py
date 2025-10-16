@@ -754,12 +754,82 @@ elif st.session_state.page == "Detection":
         return YOLO("models/detection_model.pt")  # path to your model
 
     detection_model = load_detection_model()
-    st.info("Upload an image")
     uploaded_file = st.file_uploader(
-        "Upload an underwater image",
+        "",
         type=["jpg", "jpeg", "png"],
         accept_multiple_files=True
     )
+    st.markdown("""
+        <style>
+        /* === RESET STREAMLIT UPLOADER STYLING === */
+        [data-testid="stFileUploader"] section {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            text-align: center !important;
+            gap: 20px !important;
+        }
+
+        [data-testid="stFileUploader"] {
+            position: relative !important;
+            z-index: 50 !important;
+            border-radius: 15px !important;
+            padding: 2rem 1rem !important;
+            background: rgba(255,255,255,0.45) !important;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        /* Hide default gray text */
+        [data-testid="stFileUploaderLabel"],
+        [data-testid="stFileUploaderDropzoneInstructions"] {
+            display: none !important;
+        }
+
+        /* === ADD TITLE ABOVE BUTTON === */
+        [data-testid="stFileUploader"]::before {
+            content: "Upload Underwater Image";
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #0D47A1;
+            display: block;
+            margin-bottom: 1rem;
+        }
+
+        /* === REBUILD BROWSE BUTTON === */
+        [data-testid="stFileUploader"] section div div div button {
+            appearance: none !important;
+            display: inline-block !important;
+            border: none !important;
+            outline: none !important;
+            background: linear-gradient(to right, #1565C0, #1E88E5) !important;
+            color: white !important;
+            font-weight: 600 !important;
+            font-size: 1rem !important;
+            padding: 14px 32px !important;
+            border-radius: 10px !important;
+            cursor: pointer !important;
+            transition: all 0.3s ease-in-out !important;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important;
+            text-transform: none !important;
+        }
+
+        /* Hover glow */
+        [data-testid="stFileUploader"] section div div div button:hover {
+            background: linear-gradient(to right, #0D47A1, #1565C0) !important;
+            transform: scale(1.05);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+        }
+
+        /* Ensure button text stays visible */
+        [data-testid="stFileUploader"] section div div div button * {
+            color: white !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
+
 
     if uploaded_file:
         from components.loading_overlay import show_loading_overlay
@@ -821,6 +891,8 @@ elif st.session_state.page == "Detection":
 
             from components.auto_scroll import auto_scroll_to_results
             auto_scroll_to_results()
+
+            
 
 
             # === Extract all detections for the table ===
