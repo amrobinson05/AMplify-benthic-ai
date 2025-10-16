@@ -13,6 +13,7 @@ from PIL import Image
 import base64
 import io
 import pandas as pd
+import numpy as np
 
 
 # PAGE CONFIG
@@ -733,8 +734,29 @@ elif st.session_state.page == "Classification":
     """, unsafe_allow_html=True)
 
 elif st.session_state.page == "Detection":
-    st.markdown("### 🔎 Detection Page")
-    st.info("This page will use the Detection LLM once it's trained.")
+    st.markdown("### Detection Page")
+
+    @st.cache_resource
+    def load_detection_model():
+        from ultralytics import YOLO
+        return YOLO("detection_model.pt")  # path to your model
+    
+    detection_model = load_detection_model()
+    st.info("Upload an image")
+    uploaded_file = st.file_uploader("Upload an underwater image", type=["jpg","jpeg","png"])
+    if uploaded_file:
+       
+
+        img = Image.open(uploaded_file).convert("RGB")  # ensure 3 channels
+        img_np = np.array(img)
+
+        # Run detection
+        results = detection_model.predict(img_np)
+        results_img = results[0].plot()  # draw bounding boxes & labels
+
+        # Display the prediction
+        st.image(results_img, caption="Predictions", use_column_width=True)
+    
     st.markdown("""
         <div style='padding: 2rem; background: rgba(255,255,255,0.6);
                     border-radius: 10px; text-align:center;'>
