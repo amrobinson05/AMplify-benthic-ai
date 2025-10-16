@@ -858,23 +858,56 @@ elif st.session_state.page == "Detection":
     st.info("Upload an image")
     uploaded_file = st.file_uploader("Upload an underwater image", type=["jpg","jpeg","png"], accept_multiple_files=True)
     if uploaded_file:
-       
+        results_data = []
 
-        img = Image.open(uploaded_file).convert("RGB")  # ensure 3 channels
-        img_np = np.array(img)
+        for i, uploaded_img in enumerate(uploaded_file):
+            # Read image
+            image = Image.open(uploaded_img).convert("RGB")
+            img_np = np.array(image)
 
-        # Run detection
-        results = detection_model.predict(img_np)
-        results_img = results[0].plot()  # draw bounding boxes & labels
+            # Run YOLO detection
+            results = detection_model.predict(img_np)
+            result = results[0]
 
-        # Display the prediction
-        st.image(results_img, caption="Predictions", use_column_width=True)
-    
-    st.markdown("""
-        <div style='padding: 2rem; background: rgba(255,255,255,0.6);
-                    border-radius: 10px; text-align:center;'>
-            <h3>🚧 Detection model coming soon!</h3>
-            <p>Once your detection model is ready, you'll be able to upload underwater 
-            images here for bounding-box detection and segmentation of marine species.</p>
-        </div>
-    """, unsafe_allow_html=True)
+            # Draw bounding boxes
+            results_img = result.plot()
+
+            # Display image and results
+            if i == 0:
+                results_img = result.plot()
+                st.image(results_img, caption=f"Predictions for {uploaded_img.name}", use_column_width=True)
+            # Extract detections
+            boxes = result.boxes
+            for box in boxes:
+                cls_id = int(box.cls[0])
+                conf = float(box.conf[0])
+                xyxy = box.xyxy[0].tolist()
+
+                results_data.append({
+                    "Filename": uploaded_img.name,
+                    "Class": detection_model.names[cls_id],
+                    "Confidence (%)": round(conf * 100, 2),
+                    "Bounding Box": [round(x, 2) for x in xyxy]
+                })
+
+        # Convert to DataFrame
+        df_results = pd.DataFrame(results_data)
+        st.write("### 🐚 Detection Results")
+        st.dataframe(df_results, use_container_width=True)
+        summary_df = (
+            df_results.groupby("Class")
+            .size()
+            .reset_index(name="Total Detections")
+            .sort_values(by="Total Detections", ascending=False)
+            .reset_index(drop=True)
+        )
+
+        st.dataframe(summary_df, use_container_width=True)
+        # CSV Download
+        csv = df_results.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="Download Results as CSV",
+            data=csv,
+            file_name="detection_results.csv",
+            mime="text/csv"
+        )
