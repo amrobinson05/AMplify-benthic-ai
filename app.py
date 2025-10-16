@@ -293,6 +293,20 @@ page_heading = {
     "Detection": "Detection Model"
 }[st.session_state.page]
 
+description = ""
+if st.session_state.page == "Home":
+    description = "Discover the ocean's mysteries. Classify benthic species in underwater images with AI-powered recognition."
+elif st.session_state.page == "Classification":
+    description = (
+        "Use this model to identify marine life in underwater photos. "
+        "It classifies images into seven benthic species: crab, eel, whelk, scallop, flatfish, roundfish, and skate."
+    )
+elif st.session_state.page == "Detection":
+    description = (
+        "Use this model to locate and label marine species in underwater images by "
+        "drawing bounding boxes around detected organisms and identifying their species."
+    )
+
 st.markdown(f"""
     <style>
     .gradient-text {{
@@ -311,14 +325,11 @@ st.markdown(f"""
     <div style='text-align:center;'>
         <span class='gradient-text'>{page_heading}</span>
         <h5 style='text-align:center; color:#37474F;'>
-            {(
-                "Discover the ocean's mysteries. Classify benthic species in underwater images with AI-powered recognition."
-                if st.session_state.page == "Home"
-                else "Use this model to analyze marine images and detect or classify benthic species."
-            )}
+            {description}
         </h5>
     </div>
 """, unsafe_allow_html=True)
+
 
 
 
