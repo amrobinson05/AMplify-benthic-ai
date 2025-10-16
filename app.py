@@ -394,7 +394,7 @@ def load_model():
     model = models.efficientnet_b0(pretrained=False)
     num_features = model.classifier[1].in_features
     model.classifier[1] = nn.Linear(num_features, len(CLASSES))
-    model.load_state_dict(torch.load("benthic_model.pth", map_location=torch.device("cpu")))
+    model.load_state_dict(torch.load("models/benthic_model.pth", map_location=torch.device("cpu")))
     model.eval()
     return model
 
@@ -856,7 +856,7 @@ elif st.session_state.page == "Detection":
     @st.cache_resource
     def load_detection_model():
         from ultralytics import YOLO
-        return YOLO("detection_model.pt")  # path to your model
+        return YOLO("models/detection_model.pt")  # path to your model
     
     detection_model = load_detection_model()
     st.info("Upload an image")
