@@ -29,11 +29,12 @@ st.set_page_config(
 if "page" not in st.session_state:
     st.session_state.page = "Home"
 
-# Dynamic page title based on selected tab
+# Add a title dictionary (optional)
 page_titles = {
     "Home": "Benthic Species Identifier",
     "Classification": "Classification Model",
-    "Detection": "Detection Model"
+    "Detection": "Detection Model",
+    "Metrics": "Model Metrics"   # ✅ NEW PAGE
 }
 
 # ======================================================
@@ -291,7 +292,8 @@ from streamlit import rerun
 page_heading = {
     "Home": "Benthic Species Identifier",
     "Classification": "Classification Model",
-    "Detection": "Detection Model"
+    "Detection": "Detection Model",
+    "Metrics": "Model Metrics"   # ✅ added
 }[st.session_state.page]
 
 description = ""
@@ -335,41 +337,55 @@ st.markdown(f"""
 
 
 
+# ======================================================
+# 🧭 NAVIGATION BAR (Home / Classification / Detection / Metrics)
+# ======================================================
+
 # --- Initialize session state ---
 if "page" not in st.session_state:
     st.session_state.page = "Home"
 
+# --- Tab bar layout ---
 st.markdown('<div class="tab-bar">', unsafe_allow_html=True)
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     if st.button("Home", use_container_width=True):
         st.session_state.page = "Home"
-        rerun()
+        st.rerun()
 with col2:
     if st.button("Classification", use_container_width=True):
         st.session_state.page = "Classification"
-        rerun()
+        st.rerun()
 with col3:
     if st.button("Detection", use_container_width=True):
         st.session_state.page = "Detection"
-        rerun()
+        st.rerun()
+with col4:
+    if st.button("Metrics", use_container_width=True):  # ✅ add consistent width
+        st.session_state.page = "Metrics"
+        st.rerun()
 
 st.markdown('</div>', unsafe_allow_html=True)
+
+# ======================================================
+# 🎨 NAVIGATION BUTTON STYLING (White + Shadow)
+# ======================================================
 st.markdown("""
 <style>
 /* === STREAMLIT BUTTON STYLE OVERRIDE === */
 .stButton > button {
     background-color: white !important;
-    color: #1565C0 !important;          /* deep blue text */
+    color: #1565C0 !important;
     font-weight: 600 !important;
-    font-size: 0.95rem !important;      /* smaller size */
+    font-size: 0.95rem !important;
     border: none !important;
     border-radius: 8px !important;
     padding: 8px 20px !important;
+    width: 100% !important;            /* ✅ uniform width */
     cursor: pointer !important;
     transition: all 0.2s ease-in-out !important;
-    box-shadow: 0 8px 16px rgba(0,0,0,0.3) !important;  /* 🩵 shadow */
+    box-shadow: 0 8px 16px rgba(0,0,0,0.3) !important;
 }
 
 /* Hover effect — light blue tint */
@@ -385,8 +401,8 @@ st.markdown("""
     box-shadow: 0 4px 8px rgba(0,0,0,0.5);
 }
 
-/* Optional: Keep buttons neatly aligned */
-.nav-buttons {
+/* Keep buttons centered and even */
+.tab-bar {
     display: flex;
     justify-content: center;
     gap: 1rem;
@@ -394,6 +410,7 @@ st.markdown("""
 }
 </style>
 """, unsafe_allow_html=True)
+
 
 
 st.markdown("""
@@ -414,18 +431,6 @@ div[data-testid="stButton"] > button p {
 </style>
 """, unsafe_allow_html=True)
 
-
-# SIDEBAR
-with st.sidebar:
-    st.title("🌊 Benthic AI")
-    st.write("""
-    This app uses a fine-tuned deep learning model to classify benthic organisms
-    (like crabs, scallops, and eels) from underwater imagery.
-    """)
-    st.markdown("---")
-    show_chart = st.checkbox("Show probability chart", value=True)
-    st.write("**Created by:** Ariana Robinson & Megan Timmes")
-    st.caption("William & Mary AI Case Competition — Fall 2025")
 
 
 # MODEL SETUP
@@ -971,3 +976,18 @@ elif st.session_state.page == "Detection":
             file_name="detection_results.csv",
             mime="text/csv"
         )
+elif st.session_state.page == "Metrics":
+    st.markdown("""
+        <div style="
+            text-align:center;
+            background: rgba(255,255,255,0.6);
+            backdrop-filter: blur(10px);
+            border-radius: 18px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            padding: 2rem;
+            margin-top: 2rem;
+        ">
+            <h2 style="color:#0D47A1; font-weight:800;">📊 Model Metrics</h2>
+            <p style="color:#04365c;">Coming soon — visualize accuracy, loss, and performance of your benthic models here!</p>
+        </div>
+    """, unsafe_allow_html=True)
