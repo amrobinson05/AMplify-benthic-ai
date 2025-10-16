@@ -686,24 +686,9 @@ elif st.session_state.page == "Classification":
         st.markdown("</div>", unsafe_allow_html=True)
         
 
-        import streamlit.components.v1 as components
+        from components.auto_scroll import auto_scroll_to_results
+        auto_scroll_to_results()
 
-        # === SMOOTH AUTO-SCROLL TO RESULTS (clean version) ===
-        components.html("""
-        <script>
-        (function(){
-        const doc = window.parent.document;
-        const target = doc.querySelector('#results-anchor') || doc.querySelector('.results-box');
-        if (!target) return;
-        setTimeout(() => {
-            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-            // Optional: flash border glow for visibility
-            target.style.boxShadow = '0 0 20px rgba(21,101,192,0.6)';
-            setTimeout(() => { target.style.boxShadow = 'none'; }, 900);
-        }, 100);
-        })();
-        </script>
-        """, height=0)
 
 
     st.markdown("""
@@ -864,6 +849,9 @@ elif st.session_state.page == "Detection":
                     confidence_percent=conf_percent or 0.0,
                     species_info=None
                 )
+            from components.auto_scroll import auto_scroll_to_results
+            auto_scroll_to_results()
+
 
             # === Extract all detections for the table ===
             boxes = result.boxes
