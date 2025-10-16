@@ -2,7 +2,8 @@ streamlit==1.29.0
 torch==2.2.2
 torchvision==0.17.2
 pillow
-numpy
 pandas
 opencv-python-headless
 matplotlib
+ultralytics
+numpy<2
