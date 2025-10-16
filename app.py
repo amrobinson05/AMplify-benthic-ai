@@ -569,51 +569,8 @@ elif st.session_state.page == "Classification":
 
         results_all = []  # store results for all images
 
-        # === Species Info Database ===
-        species_info = {
-            "Scallop": {
-                "Habitat": "Sandy or gravel seafloor, often near tidal currents",
-                "Depth Range": "5–100 m",
-                "Fun Fact": "Scallops can swim by clapping their shells rapidly!",
-                "Description": "Bivalve mollusks with fan-shaped shells that rest on the seafloor and filter-feed plankton."
-            },
-            "Crab": {
-                "Habitat": "Rocky reefs, sandy bottoms, and seagrass beds",
-                "Depth Range": "0–300 m",
-                "Fun Fact": "Crabs communicate by drumming or waving their claws.",
-                "Description": "Decapod crustaceans with hard exoskeletons, two pincers, and sideways movement."
-            },
-            "Eel": {
-                "Habitat": "Burrows in sand or mud; rocky crevices",
-                "Depth Range": "10–400 m",
-                "Fun Fact": "Eels can swim both forwards and backwards!",
-                "Description": "Elongated fish with snake-like bodies that hide in sediment or rocks, emerging to hunt at night."
-            },
-            "Flatfish": {
-                "Habitat": "Sandy or muddy seafloor, often near estuaries",
-                "Depth Range": "0–200 m",
-                "Fun Fact": "Flatfish are born symmetrical but one eye migrates to the other side as they mature.",
-                "Description": "Bottom-dwelling fish that camouflage perfectly with sediment, lying flat on one side."
-            },
-            "Roundfish": {
-                "Habitat": "Open water above reefs or rocky areas",
-                "Depth Range": "5–250 m",
-                "Fun Fact": "Roundfish have a more cylindrical shape, unlike flatfish or skates.",
-                "Description": "Typical fish-shaped species with a lateral line, adapted for swimming in open water."
-            },
-            "Skate": {
-                "Habitat": "Soft sediment and sandy seabeds",
-                "Depth Range": "20–500 m",
-                "Fun Fact": "Skates are related to rays and lay egg cases called 'mermaid’s purses'.",
-                "Description": "Flat-bodied cartilaginous fish with long tails and large pectoral fins used for gliding along the seafloor."
-            },
-            "Whelk": {
-                "Habitat": "Cold, shallow waters with sand or mud substrate",
-                "Depth Range": "0–200 m",
-                "Fun Fact": "Whelks drill holes in shells of prey using a toothed tongue called a radula.",
-                "Description": "Predatory sea snails with spiral shells that feed on bivalves and other invertebrates."
-            }
-        }
+        from components.species_info import species_info
+
 
 
         total_files = len(uploaded_files)
@@ -636,12 +593,17 @@ elif st.session_state.page == "Classification":
 
 # ... inside your loop, where you currently render the HTML ...
             if i < 1:
+                from components.species_info import get_species_info
+
+                info = get_species_info(species)
+
                 render_results_box(
                     image_bytes=img_bytes,
                     species=species,
                     confidence_percent=confidence_percent,
-                    species_info=species_info,   # you already have this dict
-    )
+                    species_info=info,   # <- a single dict for that species (RIGHT)
+                )
+    
 
 
 
@@ -804,6 +766,8 @@ elif st.session_state.page == "Detection":
         from components.result_box import render_results_box
         import base64
         from io import BytesIO
+        from components.species_info import species_info
+        from components.species_info import get_species_info
 
         show_loading_overlay("Running Detection Model...", duration=1.0)
 
@@ -838,17 +802,23 @@ elif st.session_state.page == "Detection":
                 cls_id = int(result.boxes.cls[idx])
                 label = names_map.get(cls_id, f"class_{cls_id}")
                 return label, top_conf * 100.0
-
+            
             detected_species, conf_percent = get_top_detection(result, detection_model.names)
+
+            # ✅ define info first
+            info = get_species_info(detected_species)
+
 
             # === Show results box for first image ===
             if i == 0:
                 render_results_box(
-                    image_bytes=base64.b64decode(results_b64),  # ✅ annotated image
+                    image_bytes=base64.b64decode(results_b64),
                     species=detected_species or "No objects detected",
                     confidence_percent=conf_percent or 0.0,
-                    species_info=None
+                    species_info=info
                 )
+
+
             from components.auto_scroll import auto_scroll_to_results
             auto_scroll_to_results()
 
