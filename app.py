@@ -299,46 +299,15 @@ st.markdown(
 
 
 
-# CUSTOM STYLES FOR BAR
-st.markdown(
-    """
-    <style>
-    .tab-bar {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background-color: white;
-        border-radius: 12px;
-        overflow: hidden;
-        width: 50%;
-        margin: 20px auto;
-        box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    .tab {
-        flex: 1;
-        text-align: center;
-        padding: 12px 0;
-        font-size: 18px;
-        font-weight: 600;
-        color: #1565C0;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        border-right: 1px solid #e0e0e0;
-    }
-    .tab:last-child {
-        border-right: none;
-    }
-    .tab:hover {
-        background-color: #f0f6ff;
-        color: #0D47A1;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+# --- Initialize session state ---
+if "page" not in st.session_state:
+    st.session_state.page = "Home"
 
+
+# --- Render button bar ---
 st.markdown('<div class="tab-bar">', unsafe_allow_html=True)
 col1, col2, col3 = st.columns(3)
+
 with col1:
     if st.button("Home", use_container_width=True):
         st.session_state.page = "Home"
@@ -348,7 +317,26 @@ with col2:
 with col3:
     if st.button("Detection", use_container_width=True):
         st.session_state.page = "Detection"
+
 st.markdown('</div>', unsafe_allow_html=True)
+
+st.markdown("""
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@800&display=swap" rel="stylesheet">
+<style>
+/* Target the actual text inside the Streamlit button */
+div[data-testid="stButton"] > button p {
+    font-family: 'Poppins', sans-serif !important;
+    font-size: 26px !important;      /* ✅ bigger font */
+    font-weight: 500 !important;     /* ✅ extra bold */
+    color: #1565C0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 50px !important;
+            
+    
+}
+</style>
+""", unsafe_allow_html=True)
 
 
 # SIDEBAR
@@ -394,9 +382,14 @@ def predict(image):
         conf, idx = torch.max(probs, 0)
     return CLASSES[idx.item()], conf.item(), probs
 
+
+
+
 # ======================================================
 # PAGE ROUTING
 # ======================================================
+
+
 if st.session_state.page == "Home":
     st.markdown("""
         <div style="
