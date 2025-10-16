@@ -356,6 +356,45 @@ with col3:
         rerun()
 
 st.markdown('</div>', unsafe_allow_html=True)
+st.markdown("""
+<style>
+/* === STREAMLIT BUTTON STYLE OVERRIDE === */
+.stButton > button {
+    background-color: white !important;
+    color: #1565C0 !important;          /* deep blue text */
+    font-weight: 600 !important;
+    font-size: 0.95rem !important;      /* smaller size */
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 8px 20px !important;
+    cursor: pointer !important;
+    transition: all 0.2s ease-in-out !important;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.3) !important;  /* 🩵 shadow */
+}
+
+/* Hover effect — light blue tint */
+.stButton > button:hover {
+    background-color: #f2f7ff !important;
+    transform: scale(1.03);
+    box-shadow: 0 10px 18px rgba(0,0,0,0.65);
+}
+
+/* Active (pressed) look */
+.stButton > button:active {
+    transform: scale(0.97);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+}
+
+/* Optional: Keep buttons neatly aligned */
+.nav-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+}
+</style>
+""", unsafe_allow_html=True)
+
 
 st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@800&display=swap" rel="stylesheet">
