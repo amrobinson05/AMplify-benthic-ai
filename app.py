@@ -1165,6 +1165,8 @@ elif st.session_state.page == "Metrics":
     "mAP@50": [0.901, 0.926, 0.965, 0.776, 0.883, 0.957, 0.892],
     "mAP@50–95": [0.585, 0.711, 0.649, 0.547, 0.669, 0.774, 0.549]
 })
+    df_detection_metrics["F1"] = 2 * (df_detection_metrics["Precision"] * df_detection_metrics["Recall"]) / \
+                             (df_detection_metrics["Precision"] + df_detection_metrics["Recall"])
 
 
     col1, col2 = st.columns([1, 1])
@@ -1174,24 +1176,31 @@ elif st.session_state.page == "Metrics":
                 "Precision": "{:.3f}",
                 "Recall": "{:.3f}",
                 "mAP@50": "{:.3f}",
-                "mAP@50–95": "{:.3f}"
+                "mAP@50–95": "{:.3f}",
+                "F1": "{:.3f}"
             }), use_container_width=True)
     with col2:
-        st.markdown('<h2 style="color:#0D47A1; font-weight:800; text-align:center;">Bar Chart</h2>', unsafe_allow_html=True)
-        df_plot = df_detection_metrics.melt(
-        id_vars="Class",
-        value_vars=["Precision", "Recall", "mAP@50"],
-        var_name="Metric",
-        value_name="Score"
-    )
-
-        # Plot
+        st.markdown('<h2 style="color:#0D47A1; font-weight:800; text-align:center;">F1 Score by Class</h2>', unsafe_allow_html=True)
         plt.figure(figsize=(10,5))
-        sns.barplot(x="Class", y="Score", hue="Metric", data=df_plot)
+        sns.barplot(
+            x="Class", 
+            y="F1", 
+            data=df_detection_metrics, 
+            color="#0D47A1",   # dark blue bars
+            edgecolor="black"   # black outlines
+        )
         plt.ylim(0,1)
-        plt.title("Per-Class Detection Performance", fontsize=14, color="#0D47A1", fontweight="bold")
-        plt.xlabel("Species")
-        plt.ylabel("Score")
-        plt.legend(loc="lower right")
+        plt.xlabel("")
+        plt.ylabel("F1 Score", fontsize=14, fontweight="bold",color = 'black')
+        plt.xticks(fontsize=12, color = 'black')
+        plt.yticks(fontsize=12,color = 'black')
+
+        # Add values on top of bars
+        for index, row in df_detection_metrics.iterrows():
+            plt.text(index, row.F1 + 0.02, f"{row.F1:.2f}", ha='center', fontsize=12, fontweight='bold',color = 'black')
+
+        # Optional: add white background behind plot for clarity
+        plt.gca().set_facecolor("white")
+
         st.pyplot(plt.gcf())
 
