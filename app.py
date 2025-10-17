@@ -1090,6 +1090,15 @@ elif st.session_state.page == "Detection":
             </div>
             """, unsafe_allow_html=True)
 
+            # --- 🪸 Chart container ---
+            st.markdown('<div class="canvas-container">', unsafe_allow_html=True)
+            col1, col2 = st.columns(2)
+            with col1:
+                plot_biodiversity_pie(results_all)
+            with col2:
+                plot_species_abundance(results_all)
+            st.markdown('</div>', unsafe_allow_html=True)
+
 
         # === Detection Results Table ===
         st.write("### 🐚 Detection Results")
