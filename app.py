@@ -140,6 +140,37 @@ st.set_page_config(
     layout="wide"
 )
 
+st.markdown("""
+<style>
+/* 🚫 Disable Streamlit fade / slide animations */
+[data-testid="stAppViewContainer"], 
+[data-testid="stVerticalBlock"], 
+[data-testid="stHorizontalBlock"], 
+[data-testid="stMarkdownContainer"],
+[data-testid="stColumn"] {
+    transition: none !important;
+    animation: none !important;
+}
+
+/* Also disable animations for buttons and reruns */
+button, [role="button"], [data-testid="stButton"] {
+    transition: none !important;
+}
+
+/* Avoid fade effects on images */
+img {
+    transition: none !important;
+    animation: none !important;
+}
+
+/* Disable Streamlit spinner fade too */
+[data-testid="stSpinner"] {
+    animation: none !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+
 # ✅ Initialize session state once
 if "page" not in st.session_state:
     st.session_state.page = "Home"
@@ -897,12 +928,43 @@ elif st.session_state.page == "Classification":
 
 elif st.session_state.page == "Detection":
 
+    import base64
+    from io import BytesIO
+    import numpy as np
+    from PIL import Image
+    from collections import Counter
+    import math
+    import pandas as pd
+    from components.result_box import render_results_box
+    from components.species_info import get_species_info
+    from components.loading_overlay import show_loading_overlay
+    from components.auto_scroll import auto_scroll_to_results
+
+    # --- Load YOLO model once ---
     @st.cache_resource
     def load_detection_model():
         from ultralytics import YOLO
-        return YOLO("models/detection_model.pt")  # path to your model
+        return YOLO("models/detection_model.pt")
 
     detection_model = load_detection_model()
+
+    # --- Cache inference results (YOLO batch processing) ---
+    @st.cache_data(show_spinner=False)
+    def run_yolo_batch(_model, uploaded_files):
+        """Run YOLO once per uploaded image and return results."""
+        batch_results = []
+        for f in uploaded_files:
+            image = Image.open(f).convert("RGB")
+            img_np = np.array(image)
+            result = _model.predict(img_np)[0]
+            batch_results.append((f.name, image, result))
+        return batch_results
+
+    def get_result_image(_result):
+        buffer = BytesIO()
+        Image.fromarray(_result.plot()).save(buffer, format="PNG")
+        return base64.b64encode(buffer.getvalue()).decode()
+
 
     # --- File uploader ---
     uploaded_files = st.file_uploader(
@@ -913,15 +975,7 @@ elif st.session_state.page == "Detection":
     )
 
     if uploaded_files:
-        from components.loading_overlay import show_loading_overlay
-        from components.result_box import render_results_box
-        import base64
-        from io import BytesIO
-        from components.species_info import get_species_info
-
         current_names = [f.name for f in uploaded_files]
-
-        # 🧠 Detect if new files were ADDED (not just removed or re-ordered)
         prev_names = st.session_state.get("last_uploaded_detection", [])
         added_files = [f for f in current_names if f not in prev_names]
 
@@ -929,56 +983,44 @@ elif st.session_state.page == "Detection":
             st.session_state.last_uploaded_detection = current_names
             st.session_state.scrolled_after_upload = False
             show_loading_overlay("Running Detection Model...", duration=1.0)
-        else:
-            # Just update the list quietly (no overlay when removing)
-            st.session_state.last_uploaded_detection = current_names
 
+        # --- Run inference once per batch (cached) ---
+        results_batch = run_yolo_batch(detection_model, uploaded_files)
 
+        # --- Initialize session state ---
+        if "detection_results" not in st.session_state:
+            st.session_state.detection_results = []
+            st.session_state.current_detection_index = 0
+
+        st.session_state.detection_results = []
         results_data = []
 
-        # === Run YOLO on each uploaded image ===
-        for i, uploaded_img in enumerate(uploaded_files):
-            image = Image.open(uploaded_img).convert("RGB")
-            img_np = np.array(image)
+        def get_top_detection(result, names_map):
+            """Get top detection from YOLO results."""
+            if not hasattr(result, "boxes") or result.boxes is None or len(result.boxes) == 0:
+                return None, None
+            confs = result.boxes.conf.cpu().numpy()
+            idx = confs.argmax()
+            top_conf = float(confs[idx])
+            cls_id = int(result.boxes.cls[idx])
+            label = names_map.get(cls_id, f"class_{cls_id}")
+            return label, top_conf * 100.0
 
-            results = detection_model.predict(img_np)
-            result = results[0]
-            results_img = result.plot()
-
-            # Convert detection image with boxes → base64
-            results_pil = Image.fromarray(results_img)
-            buffer = BytesIO()
-            results_pil.save(buffer, format="PNG")
-            results_b64 = base64.b64encode(buffer.getvalue()).decode()
-
-            # Get top detection info
-            def get_top_detection(result, names_map):
-                if not hasattr(result, "boxes") or result.boxes is None or len(result.boxes) == 0:
-                    return None, None
-                confs = result.boxes.conf.cpu().numpy()
-                idx = confs.argmax()
-                top_conf = float(confs[idx])
-                cls_id = int(result.boxes.cls[idx])
-                label = names_map.get(cls_id, f"class_{cls_id}")
-                return label, top_conf * 100.0
-
+        # --- Process detections ---
+        for filename, image, result in results_batch:
+            results_b64 = get_result_image(result)
             detected_species, conf_percent = get_top_detection(result, detection_model.names)
             info = get_species_info(detected_species)
 
-            # === Show results box for first image ===
-            if i == 0 and not st.session_state.get("scrolled_after_upload", False):
-                from components.auto_scroll import auto_scroll_to_results
-                st.markdown("<div id='results-anchor'></div>", unsafe_allow_html=True)
-                auto_scroll_to_results()
-                st.session_state.scrolled_after_upload = True
-                render_results_box(
-                    image_bytes=base64.b64decode(results_b64),
-                    species=detected_species or "No objects detected",
-                    confidence_percent=conf_percent or 0.0,
-                    species_info=info
-                )
+            st.session_state.detection_results.append({
+                "filename": filename,
+                "image_b64": results_b64,
+                "species": detected_species,
+                "confidence": conf_percent,
+                "info": info
+            })
 
-            # Store all detections
+            # Add detections to table
             boxes = result.boxes
             if boxes is not None and len(boxes) > 0:
                 for box in boxes:
@@ -986,42 +1028,91 @@ elif st.session_state.page == "Detection":
                     conf = float(box.conf[0])
                     xyxy = box.xyxy[0].tolist()
                     results_data.append({
-                        "Filename": uploaded_img.name,
+                        "Filename": filename,
                         "Class": detection_model.names[cls_id],
                         "Confidence (%)": round(conf * 100, 2),
                         "Bounding Box": [round(x, 2) for x in xyxy]
                     })
             else:
-            # Add a row even if no detection was made
                 results_data.append({
-                    "Filename": uploaded_img.name,
+                    "Filename": filename,
                     "Class": "No animal detected",
                     "Confidence (%)": 0.0,
                     "Bounding Box": []
                 })
 
-        # === Convert to DataFrame ===
+        # === 🧭 Display one image result at a time ===
+        if st.session_state.detection_results:
+            idx = st.session_state.current_detection_index
+            results_list = st.session_state.detection_results
+            idx = max(0, min(idx, len(results_list) - 1))
+            current = results_list[idx]
+
+            # --- Header ---
+            st.markdown(
+                f"<h4 style='text-align:center; color:#1565C0;'>"
+                f"Image {idx+1} of {len(results_list)}: {current['filename']}</h4>",
+                unsafe_allow_html=True
+            )
+
+            # --- Render current result ---
+            render_results_box(
+                image_bytes=base64.b64decode(current["image_b64"]),
+                species=current["species"] or "No objects detected",
+                confidence_percent=current["confidence"] or 0.0,
+                species_info=current["info"]
+            )
+
+            def go_prev():
+                st.session_state.current_detection_index = max(
+                    0, st.session_state.current_detection_index - 1
+                )
+                st.session_state.scroll_to_results = True
+
+            def go_next():
+                st.session_state.current_detection_index = min(
+                    len(st.session_state.detection_results) - 1,
+                    st.session_state.current_detection_index + 1,
+                )
+                st.session_state.scroll_to_results = True 
+
+            # --- Navigation Arrows ---
+            st.markdown("<br>", unsafe_allow_html=True)
+            nav_prev, _, nav_next = st.columns([1, 4, 1])
+
+            with nav_prev:
+                st.button(
+                    "⬅️ Previous",
+                    key=f"prev_{idx}",
+                    use_container_width=True,
+                    disabled=(idx == 0),
+                    on_click=go_prev,
+                )
+
+            with nav_next:
+                st.button(
+                    "Next ➡️",
+                    key=f"next_{idx}",
+                    use_container_width=True,
+                    disabled=(idx == len(results_list) - 1),
+                    on_click=go_next,
+                )
+        # === Convert results to DataFrame ===
         df_results = pd.DataFrame(results_data)
 
-        # ✅ 🌿 Ecological Insights toggle (before the table)
+        # === 🌿 Ecological Insights ===
         show_insights = st.checkbox("Show Ecological Insights", value=False)
-
         if show_insights:
             st.markdown("## 🌿 Ecological Insights")
 
-            # Convert results to classification-like format
             results_all = [{"species": c} for c in df_results["Class"].tolist()]
             diversity_score, status = calculate_ecosystem_health(results_all)
 
-            # Normalize names for consistent matching
             species_present = [r.get("species").strip().lower() for r in results_all if r.get("species")]
-            keystone_found = [
-                s for s in species_present
-                if s.capitalize() in KEYSTONE_SPECIES.keys()
-            ]
+            keystone_found = [s for s in species_present if s.capitalize() in KEYSTONE_SPECIES.keys()]
             keystone_count = len(set([s.capitalize() for s in keystone_found]))
 
-            # --- Biodiversity Tier ---
+            # --- Color tier ---
             if keystone_count >= 6:
                 box_color = "#2e7d32"
                 biodiversity_text = "🌿 Strong biodiversity — most key species present."
@@ -1035,26 +1126,14 @@ elif st.session_state.page == "Detection":
                 box_color = "#c62828"
                 biodiversity_text = "🚫 No key species identified."
 
-            # --- Ecological Stability Summary ---
             species_list = [r.get("species") for r in results_all if r.get("species")]
             species_counts = Counter(species_list)
             total = sum(species_counts.values())
             num_species = len(species_counts)
+            evenness = (diversity_score * math.log(len(species_counts))) / math.log(num_species) if num_species > 1 else 0.0
+            dominant_species = max(species_counts, key=species_counts.get) if species_counts else "None"
+            dominant_percent = (species_counts[dominant_species] / total) * 100 if total else 0
 
-            # Evenness (Pielou’s J)
-            if num_species > 1:
-                evenness = (diversity_score * math.log(len(species_counts))) / math.log(num_species)
-            else:
-                evenness = 0.0
-
-            # Dominant species
-            if species_counts:
-                dominant_species = max(species_counts, key=species_counts.get)
-                dominant_percent = (species_counts[dominant_species] / total) * 100
-            else:
-                dominant_species, dominant_percent = "None", 0
-
-            # Stability statement
             if diversity_score > 0.75 and evenness > 0.6:
                 summary_text = "Stable ecosystem — balanced and resilient community structure."
             elif diversity_score > 0.4:
@@ -1062,7 +1141,6 @@ elif st.session_state.page == "Detection":
             else:
                 summary_text = "Low stability — one or two species dominate the environment."
 
-            # --- Unified Tier-Colored Display Box ---
             st.markdown(f"""
             <div style='
                 background:rgba(0, 24, 61, 0.85);
@@ -1090,7 +1168,7 @@ elif st.session_state.page == "Detection":
             </div>
             """, unsafe_allow_html=True)
 
-            # --- 🪸 Chart container ---
+            # --- Biodiversity Charts ---
             st.markdown('<div class="canvas-container">', unsafe_allow_html=True)
             col1, col2 = st.columns(2)
             with col1:
@@ -1099,12 +1177,11 @@ elif st.session_state.page == "Detection":
                 plot_species_abundance(results_all)
             st.markdown('</div>', unsafe_allow_html=True)
 
-
-        # === Detection Results Table ===
+        # === 🐚 Detection Results Table ===
         st.write("### 🐚 Detection Results")
         st.dataframe(df_results, use_container_width=True)
 
-        # === Summary by class ===
+        # === Summary by Class ===
         if not df_results.empty and "Class" in df_results.columns:
             summary_df = (
                 df_results.groupby("Class")
@@ -1125,6 +1202,7 @@ elif st.session_state.page == "Detection":
             file_name="detection_results.csv",
             mime="text/csv"
         )
+
 
 
         
