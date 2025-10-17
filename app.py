@@ -24,19 +24,12 @@ def clear_uploaded_files():
             st.session_state[key] = None  # fully reset uploader state
 
 
-
-
 # PAGE CONFIG
 st.set_page_config(
     page_title="Benthic AI Dashboard",
     page_icon="🌊",
     layout="wide"
 )
-
-
-
-
-
 
 # ✅ Initialize session state once
 if "page" not in st.session_state:
@@ -49,8 +42,6 @@ page_titles = {
     "Detection": "Detection Model",
     "Metrics": "Model Metrics"   # ✅ NEW PAGE
 }
-
-
 
 
 # ==========================================
@@ -295,20 +286,9 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 
-
-
-
-
-# ======================================================
-# 🧭 NAVIGATION BAR (Home / Classification / Detection / Metrics)
-# ======================================================
-
 # --- Initialize session state ---
-# ✅ Initialize session state once
 if "page" not in st.session_state:
     st.session_state.page = "Home"
-
-# ✅ Add these lines right after that
 if "classification_nonce" not in st.session_state:
     st.session_state.classification_nonce = 0
 if "detection_nonce" not in st.session_state:
@@ -343,6 +323,7 @@ with col4:
         st.experimental_rerun()
 
 st.markdown('</div>', unsafe_allow_html=True)
+
 
 # ======================================================
 # 🎨 NAVIGATION BUTTON STYLING (White + Shadow)
@@ -386,7 +367,6 @@ st.markdown("""
 }
 </style>
 """, unsafe_allow_html=True)
-
 
 
 st.markdown("""
@@ -439,11 +419,6 @@ def predict(image):
     return CLASSES[idx.item()], conf.item(), probs
 
 
-
-
-# ======================================================
-# PAGE ROUTING
-# ======================================================
 
 
 import streamlit.components.v1 as components
@@ -514,8 +489,6 @@ elif st.session_state.page == "Classification":
     key=f"classification_upload_v{st.session_state.classification_nonce}"
 )
 
-
-
     import time
 
     # --- Set global layering once, before the upload logic ---
@@ -543,15 +516,9 @@ elif st.session_state.page == "Classification":
     </style>
     """, unsafe_allow_html=True)
 
-    # =========================================================
-    # 📸 MAIN UPLOAD + LOADING + RESULTS SECTION
-    # =========================================================
     import time
 
     if uploaded_files:
-        # ====================================================
-        # 🌊 STARFISH LOADING OVERLAY — ALWAYS ON TOP
-        # ====================================================
         starfish_b64 = base64.b64encode(open("images/starfish.png", "rb").read()).decode()
 
         # 1️⃣ Define CSS & JS so overlay beats Streamlit’s container stack
@@ -614,9 +581,7 @@ elif st.session_state.page == "Classification":
 
 
         results_all = []  # store results for all images
-
         from components.species_info import species_info
-
 
 
         total_files = len(uploaded_files)
@@ -636,8 +601,6 @@ elif st.session_state.page == "Classification":
             })
 
             from components.result_box import render_results_box
-
-# ... inside your loop, where you currently render the HTML ...
             if i < 1:
                 from components.species_info import get_species_info
                 from components.auto_scroll import auto_scroll_to_results
@@ -653,11 +616,6 @@ elif st.session_state.page == "Classification":
                     species_info=info,   # <- a single dict for that species (RIGHT)
                 )
     
-
-
-
-
-
         
         st.success(f"Processed {total_files} images!")
         # Convert results to DataFrame-friendly format
@@ -697,12 +655,6 @@ elif st.session_state.page == "Classification":
         st.markdown("</div>", unsafe_allow_html=True)
         
 
-        
-
-
-
-    
-
 elif st.session_state.page == "Detection":
 
     @st.cache_resource
@@ -718,9 +670,6 @@ elif st.session_state.page == "Detection":
         accept_multiple_files=True,
         key=f"detection_upload_v{st.session_state.detection_nonce}"
     )
-
-
-    
 
 
     if uploaded_file:
@@ -783,9 +732,7 @@ elif st.session_state.page == "Detection":
                     species_info=info
 
                 )
-            
-            
-
+        
 
             # === Extract all detections for the table ===
             boxes = result.boxes
