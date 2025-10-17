@@ -18,6 +18,7 @@ from components.backgrounds.ocean_home import render_ocean_home
 from components.backgrounds.deep_detection import render_deep_sea
 from collections import Counter
 import math
+import seaborn as sns
 
 # 🌿 Ecological Role Dictionary for All 7 Benthic Species
 KEYSTONE_SPECIES = {
@@ -1082,7 +1083,7 @@ elif st.session_state.page == "Detection":
 
             with nav_prev:
                 st.button(
-                    "⬅️ Previous",
+                    "Previous",
                     key=f"prev_{idx}",
                     use_container_width=True,
                     disabled=(idx == 0),
@@ -1091,7 +1092,7 @@ elif st.session_state.page == "Detection":
 
             with nav_next:
                 st.button(
-                    "Next ➡️",
+                    "Next",
                     key=f"next_{idx}",
                     use_container_width=True,
                     disabled=(idx == len(results_list) - 1),
@@ -1227,10 +1228,27 @@ elif st.session_state.page == "Metrics":
              <div>
             """, unsafe_allow_html=True)
     st.markdown("##")  
+    accuracy = 0.94
+    macro_f1 = 0.94
     cm_image = Image.open("images/Confusion_matrix.png") 
-    col1, col2, col3 = st.columns([1, 1, 3])
+    report = {
+                "Eel": {"Precision": 0.98, "Recall": 0.99, "F1-score": 0.98, "Support": 300},
+                "Scallop": {"Precision": 0.90, "Recall": 0.97, "F1-score": 0.93, "Support": 300},
+                "Crab": {"Precision": 0.92, "Recall": 0.91, "F1-score": 0.91, "Support": 300},
+                "Flatfish": {"Precision": 0.93, "Recall": 0.95, "F1-score": 0.94, "Support": 300},
+                "Roundfish": {"Precision": 0.94, "Recall": 0.88, "F1-score": 0.91, "Support": 300},
+                "Skate": {"Precision": 0.98, "Recall": 0.98, "F1-score": 0.98, "Support": 300},
+                "Whelk": {"Precision": 0.96, "Recall": 0.93, "F1-score": 0.95, "Support": 300},
+            }
+
+    df_metrics = pd.DataFrame(report).T.reset_index().rename(columns={"index": "Class"})
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        st.markdown('<h2 style="color:#0D47A1; font-weight:800; text-align:center;">Confusion Matrix</h2>', unsafe_allow_html=True)
+        st.image(cm_image, use_column_width=True)
     with col2:
-        st.image(cm_image, caption="Normalized Confusion Matrix", width=700)
+        st.markdown('<h2 style="color:#0D47A1; font-weight:800; text-align:center;">Per-Class Classification Metrics</h2>', unsafe_allow_html=True)
+        st.dataframe(df_metrics[["Class", "Precision", "Recall", "F1-score", "Support"]], use_container_width=True)
     
     st.markdown("""
             <div style="
