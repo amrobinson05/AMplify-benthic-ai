@@ -801,7 +801,7 @@ elif st.session_state.page == "Metrics":
                 <p style="color:#04365C; line-height:1.6;">
                     The dataset contained <strong>10,500 images</strong>, divided into <strong>7 classes</strong> (1,200 images per class). 
                     A <strong>train–test split of 80/20</strong> was used, resulting in <strong>8,400 training images</strong> and <strong>2,100 test images</strong>. 
-                    An <strong>EfficientNet-B0</strong> model was trained for <strong>15 epochs</strong>, achieving a <strong>94.33% accuracy</strong> on the test set.
+                    An <strong>EfficientNet-v2-s</strong> model was trained for <strong>10 epochs</strong>, achieving a <strong>94.33% accuracy</strong> on the test set.
                 </p>
              <div>
             """, unsafe_allow_html=True)
@@ -821,8 +821,7 @@ elif st.session_state.page == "Metrics":
             ">
                 <h2 style="color:#0D47A1; font-weight:800;">Detection Model</h2>
                 <p style="color:#04365C; line-height:1.6;">
-                    The dataset contained <strong>2,759 images</strong>, divided into <strong>7 classes</strong>. 
-                    A <strong>train–test split of 80/20</strong> was used, resulting in <strong>8,400 training images</strong> and <strong>2,100 test images</strong>. 
+                    The dataset contained <strong>2,759 images</strong> that were labelled and included the coordinates of bounding boxes. 
                     A <strong>YOLO11m</strong> model was trained for <strong>100 epochs</strong>, achieving a <strong>mAP of 90%</strong> on the test set
                 </p>
             </div>
