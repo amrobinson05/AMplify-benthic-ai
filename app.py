@@ -783,66 +783,81 @@ elif st.session_state.page == "Classification":
 
         if show_insights:
             st.markdown("## 🌿 Ecological Insights")
-            
 
+            # --- Core Calculations ---
             diversity_score, status = calculate_ecosystem_health(results_all)
+            species_list = [r.get("species") for r in results_all if r.get("species")]
+            species_counts = Counter(species_list)
+            total = sum(species_counts.values())
+            num_species = len(species_counts)
 
-            # --- Ecosystem Health Index Box ---
-            st.markdown(f"""
-            <div style='
-                text-align:center;
-                background:rgba(0, 24, 61, 0.8);  /* 🌊 darker navy translucent background */
-                backdrop-filter:blur(12px);
-                border-radius:15px;
-                box-shadow:0 8px 25px rgba(0,0,0,0.4);  /* stronger shadow for depth */
-                padding:1.5rem;
-                margin-bottom:1.5rem;
-                border:1px solid rgba(100,181,246,0.3); /* subtle glowing border */
-            '>
-                <h3 style='color:#0D47A1;'>Ecosystem Health Index</h3>
-                <p style='font-size:1.2rem;color:#0D47A1;'><b>{status}</b></p>
-                <p style='font-size:1rem;'>Shannon Diversity Score: <b>{diversity_score:.3f}</b></p>
-            </div>
-            """, unsafe_allow_html=True)
+            # --- Keystone Species ---
+            keystone_found = [s for s in species_list if s.capitalize() in KEYSTONE_SPECIES]
+            keystone_count = len(set([s.capitalize() for s in keystone_found]))
 
-            # --- 🧭 Indicator / Keystone Species Logic (add this below the health index) ---
-            species_present = [r.get("species") for r in results_all if r.get("species")]
-            keystone_found = [s for s in species_present if s in KEYSTONE_SPECIES]
-
-            # --- 🧭 Indicator Species Summary (count only) ---
-            species_present = [r.get("species") for r in results_all if r.get("species")]
-            keystone_found = [s for s in species_present if s in KEYSTONE_SPECIES]
-            keystone_count = len(set(keystone_found))
-
-            # Color based on how many of the 7 appear
-            if keystone_count >= 6:
-                box_color = "#2e7d32"   # green – strong presence
-                text = "🌿 Excellent biodiversity — most indicator species detected."
-            elif keystone_count >= 3:
-                box_color = "#fbc02d"   # yellow – moderate presence
-                text = "🪸 Moderate biodiversity — several key species detected."
-            elif keystone_count >= 1:
-                box_color = "#ef6c00"   # orange – low presence
-                text = "⚠️ Low biodiversity — few indicator species detected."
+            # --- Evenness (Pielou’s J) ---
+            if num_species > 1:
+                evenness = (diversity_score * math.log(len(species_counts))) / math.log(num_species)
             else:
-                box_color = "#c62828"   # red – none
-                text = "🚫 No indicator species detected."
+                evenness = 0.0
 
+            # --- Dominant Species ---
+            if species_counts:
+                dominant_species = max(species_counts, key=species_counts.get)
+                dominant_percent = (species_counts[dominant_species] / total) * 100
+            else:
+                dominant_species, dominant_percent = "None", 0
+
+            # --- Biodiversity Tier ---
+            if keystone_count >= 6:
+                box_color = "#2e7d32"
+                biodiversity_text = "🌿 Strong biodiversity — most key species present."
+            elif keystone_count >= 3:
+                box_color = "#fbc02d"
+                biodiversity_text = "🪸 Moderate biodiversity — some key species detected."
+            elif keystone_count >= 1:
+                box_color = "#ef6c00"
+                biodiversity_text = "⚠️ Limited biodiversity — few key species detected."
+            else:
+                box_color = "#c62828"
+                biodiversity_text = "🚫 No key species identified."
+
+            # --- Ecological Summary ---
+            if diversity_score > 0.75 and evenness > 0.6:
+                summary_text = "Stable ecosystem — balanced and resilient community structure."
+            elif diversity_score > 0.4:
+                summary_text = "Moderately stable ecosystem with partial species balance."
+            else:
+                summary_text = "Low stability — one or two species dominate the environment."
+
+            # --- Unified Tier-Colored Display Box ---
             st.markdown(f"""
             <div style='
-                background:rgba(0,24,61,0.5);
-                border-left:6px solid {box_color};
-                padding:1.2rem;
-                margin:1rem 0 1.5rem 0;
-                border-radius:10px;
-                box-shadow:0 4px 12px rgba(0,0,0,0.25);
+                background:rgba(0, 24, 61, 0.85);
+                border-radius:15px;
+                border:2px solid {box_color};
+                box-shadow:0 8px 25px rgba(0,0,0,0.4);
+                backdrop-filter:blur(12px);
+                padding:1.8rem;
+                margin-bottom:1.5rem;
                 color:#E3F2FD;
                 text-align:center;
             '>
-                <h4 style='margin-top:0; color:#BBDEFB;'>Indicator Species Present: <b>{keystone_count}/7</b></h4>
-                <p style='font-size:0.95rem; color:#B3E5FC;'>{text}</p>
+                <h3 style='color:#64B5F6;'>Ecosystem Overview</h3>
+                <p style='font-size:1.05rem; color:#90CAF9; margin-bottom:0.8rem;'><b>{status}</b></p>
+                <hr style='border:0; height:1px; background:rgba(144,202,249,0.4); margin:1rem 0;'>
+                <p style='font-size:0.95rem; line-height:1.6; color:#BBDEFB;'>
+                    <b>Shannon Index:</b> {diversity_score:.3f} • 
+                    <b>Evenness:</b> {evenness:.3f} • 
+                    <b>Indicator Species:</b> {keystone_count}/7<br>
+                    <b>Dominant Species:</b> {dominant_species} ({dominant_percent:.1f}%)
+                </p>
+                <p style='font-size:0.95rem; color:#B3E5FC; margin-top:1.2rem; line-height:1.6;'>
+                    {biodiversity_text}<br>{summary_text}
+                </p>
             </div>
             """, unsafe_allow_html=True)
+
 
 
             # --- 🪸 Chart container ---
@@ -853,6 +868,8 @@ elif st.session_state.page == "Classification":
             with col2:
                 plot_species_abundance(results_all)
             st.markdown('</div>', unsafe_allow_html=True)
+
+
 
 
 
@@ -996,73 +1013,82 @@ elif st.session_state.page == "Detection":
             results_all = [{"species": c} for c in df_results["Class"].tolist()]
             diversity_score, status = calculate_ecosystem_health(results_all)
 
-            # --- Ecosystem Health Index Box ---
-            st.markdown(f"""
-            <div style='
-                text-align:center;
-                background:rgba(0, 24, 61, 0.8);  /* 🌊 darker navy translucent background */
-                backdrop-filter:blur(12px);
-                border-radius:15px;
-                box-shadow:0 8px 25px rgba(0,0,0,0.4);  /* stronger shadow for depth */
-                padding:1.5rem;
-                margin-bottom:1.5rem;
-                border:1px solid rgba(100,181,246,0.3); /* subtle glowing border */
-            '>
-                <h3 style='color:#0D47A1;'>Ecosystem Health Index</h3>
-                <p style='font-size:1.2rem;color:#0D47A1;'><b>{status}</b></p>
-                <p style='font-size:1rem; color:#0D47A1;'>Shannon Diversity Score: <b>{diversity_score:.3f}</b></p>
-            </div>
-            """, unsafe_allow_html=True)
-
-            # Normalize both sides to lowercase for reliable matching
+            # Normalize names for consistent matching
             species_present = [r.get("species").strip().lower() for r in results_all if r.get("species")]
-
             keystone_found = [
                 s for s in species_present
-                if s.capitalize() in KEYSTONE_SPECIES.keys()  # match capitalized form
+                if s.capitalize() in KEYSTONE_SPECIES.keys()
             ]
+            keystone_count = len(set([s.capitalize() for s in keystone_found]))
 
-            keystone_count = len(set(keystone_found))
-
-
-            # Color based on how many of the 7 appear
+            # --- Biodiversity Tier ---
             if keystone_count >= 6:
-                box_color = "#2e7d32"   # green – strong presence
-                text = "🌿 Excellent biodiversity — most indicator species detected."
+                box_color = "#2e7d32"
+                biodiversity_text = "🌿 Strong biodiversity — most key species present."
             elif keystone_count >= 3:
-                box_color = "#fbc02d"   # yellow – moderate presence
-                text = "🪸 Moderate biodiversity — several key species detected."
+                box_color = "#fbc02d"
+                biodiversity_text = "🪸 Moderate biodiversity — some key species detected."
             elif keystone_count >= 1:
-                box_color = "#ef6c00"   # orange – low presence
-                text = "⚠️ Low biodiversity — few indicator species detected."
+                box_color = "#ef6c00"
+                biodiversity_text = "⚠️ Limited biodiversity — few key species detected."
             else:
-                box_color = "#c62828"   # red – none
-                text = "🚫 No indicator species detected."
+                box_color = "#c62828"
+                biodiversity_text = "🚫 No key species identified."
 
+            # --- Ecological Stability Summary ---
+            species_list = [r.get("species") for r in results_all if r.get("species")]
+            species_counts = Counter(species_list)
+            total = sum(species_counts.values())
+            num_species = len(species_counts)
+
+            # Evenness (Pielou’s J)
+            if num_species > 1:
+                evenness = (diversity_score * math.log(len(species_counts))) / math.log(num_species)
+            else:
+                evenness = 0.0
+
+            # Dominant species
+            if species_counts:
+                dominant_species = max(species_counts, key=species_counts.get)
+                dominant_percent = (species_counts[dominant_species] / total) * 100
+            else:
+                dominant_species, dominant_percent = "None", 0
+
+            # Stability statement
+            if diversity_score > 0.75 and evenness > 0.6:
+                summary_text = "Stable ecosystem — balanced and resilient community structure."
+            elif diversity_score > 0.4:
+                summary_text = "Moderately stable ecosystem with partial species balance."
+            else:
+                summary_text = "Low stability — one or two species dominate the environment."
+
+            # --- Unified Tier-Colored Display Box ---
             st.markdown(f"""
             <div style='
-                background:rgba(0,24,61,0.5);
-                border-left:6px solid {box_color};
-                padding:1.2rem;
-                margin:1rem 0 1.5rem 0;
-                border-radius:10px;
-                box-shadow:0 4px 12px rgba(0,0,0,0.25);
+                background:rgba(0, 24, 61, 0.85);
+                border-radius:15px;
+                border:2px solid {box_color};
+                box-shadow:0 8px 25px rgba(0,0,0,0.4);
+                backdrop-filter:blur(12px);
+                padding:1.8rem;
+                margin-bottom:1.5rem;
                 color:#E3F2FD;
                 text-align:center;
             '>
-                <h4 style='margin-top:0; color:#BBDEFB;'>Indicator Species Present: <b>{keystone_count}/7</b></h4>
-                <p style='font-size:0.95rem; color:#B3E5FC;'>{text}</p>
+                <h3 style='color:#64B5F6;'>Ecosystem Overview</h3>
+                <p style='font-size:1.05rem; color:#90CAF9; margin-bottom:0.8rem;'><b>{status}</b></p>
+                <hr style='border:0; height:1px; background:rgba(144,202,249,0.4); margin:1rem 0;'>
+                <p style='font-size:0.95rem; line-height:1.6; color:#BBDEFB;'>
+                    <b>Shannon Index:</b> {diversity_score:.3f} • 
+                    <b>Evenness:</b> {evenness:.3f} • 
+                    <b>Indicator Species:</b> {keystone_count}/7<br>
+                    <b>Dominant Species:</b> {dominant_species} ({dominant_percent:.1f}%)
+                </p>
+                <p style='font-size:0.95rem; color:#B3E5FC; margin-top:1.2rem; line-height:1.6;'>
+                    {biodiversity_text}<br>{summary_text}
+                </p>
             </div>
             """, unsafe_allow_html=True)
-
-            # --- 🪸 Chart container ---
-            st.markdown('<div class="canvas-container">', unsafe_allow_html=True)
-            col1, col2 = st.columns(2)
-            with col1:
-                plot_biodiversity_pie(results_all)
-            with col2:
-                plot_species_abundance(results_all)
-            st.markdown('</div>', unsafe_allow_html=True)
 
 
         # === Detection Results Table ===
