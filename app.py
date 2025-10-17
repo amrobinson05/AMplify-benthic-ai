@@ -826,51 +826,52 @@ elif st.session_state.page == "Detection":
         return YOLO("models/detection_model.pt")  # path to your model
 
     detection_model = load_detection_model()
-    # --- In Detection page ---
-    uploaded_file = st.file_uploader(
+
+    # --- File uploader ---
+    uploaded_files = st.file_uploader(
         "",
         type=["jpg", "jpeg", "png"],
         accept_multiple_files=True,
         key=f"detection_upload_v{st.session_state.detection_nonce}"
     )
 
-
-    if uploaded_file:
+    if uploaded_files:
         from components.loading_overlay import show_loading_overlay
         from components.result_box import render_results_box
         import base64
         from io import BytesIO
-        from components.species_info import species_info
         from components.species_info import get_species_info
 
-        if "last_uploaded" not in st.session_state or st.session_state.last_uploaded != [f.name for f in uploaded_file]:
-            st.session_state.last_uploaded = [f.name for f in uploaded_file]
-            from components.loading_overlay import show_loading_overlay
+        # ✅ Detect new upload (same logic as classification)
+        current_names = [f.name for f in uploaded_files]
+        new_upload = (
+            "last_uploaded_detection" not in st.session_state
+            or current_names != st.session_state.last_uploaded_detection
+        )
+        if new_upload:
+            st.session_state.last_uploaded_detection = current_names
+            st.session_state.scrolled_after_upload = False
             show_loading_overlay("Running Detection Model...", duration=1.0)
 
         results_data = []
 
-        for i, uploaded_img in enumerate(uploaded_file):
-            # Read and preprocess image
+        # === Run YOLO on each uploaded image ===
+        for i, uploaded_img in enumerate(uploaded_files):
             image = Image.open(uploaded_img).convert("RGB")
             img_np = np.array(image)
 
-            # Run YOLO detection
             results = detection_model.predict(img_np)
             result = results[0]
-
-            # Draw bounding boxes (NumPy image)
             results_img = result.plot()
 
-            # === Convert annotated image (with boxes) to base64 ===
+            # Convert detection image with boxes → base64
             results_pil = Image.fromarray(results_img)
             buffer = BytesIO()
             results_pil.save(buffer, format="PNG")
             results_b64 = base64.b64encode(buffer.getvalue()).decode()
 
-            # === Extract top detection info ===
+            # Get top detection info
             def get_top_detection(result, names_map):
-                """Return (label, confidence%) for top detection."""
                 if not hasattr(result, "boxes") or result.boxes is None or len(result.boxes) == 0:
                     return None, None
                 confs = result.boxes.conf.cpu().numpy()
@@ -879,34 +880,29 @@ elif st.session_state.page == "Detection":
                 cls_id = int(result.boxes.cls[idx])
                 label = names_map.get(cls_id, f"class_{cls_id}")
                 return label, top_conf * 100.0
-            
-            detected_species, conf_percent = get_top_detection(result, detection_model.names)
 
-            # ✅ define info first
+            detected_species, conf_percent = get_top_detection(result, detection_model.names)
             info = get_species_info(detected_species)
 
-
             # === Show results box for first image ===
-            if i == 0:
+            if i == 0 and not st.session_state.get("scrolled_after_upload", False):
                 from components.auto_scroll import auto_scroll_to_results
                 st.markdown("<div id='results-anchor'></div>", unsafe_allow_html=True)
                 auto_scroll_to_results()
+                st.session_state.scrolled_after_upload = True
                 render_results_box(
                     image_bytes=base64.b64decode(results_b64),
                     species=detected_species or "No objects detected",
                     confidence_percent=conf_percent or 0.0,
                     species_info=info
-
                 )
-        
 
-            # === Extract all detections for the table ===
+            # Store all detections
             boxes = result.boxes
             for box in boxes:
                 cls_id = int(box.cls[0])
                 conf = float(box.conf[0])
                 xyxy = box.xyxy[0].tolist()
-
                 results_data.append({
                     "Filename": uploaded_img.name,
                     "Class": detection_model.names[cls_id],
@@ -914,12 +910,49 @@ elif st.session_state.page == "Detection":
                     "Bounding Box": [round(x, 2) for x in xyxy]
                 })
 
-        # === Create results table ===
+        # === Convert to DataFrame ===
         df_results = pd.DataFrame(results_data)
+
+        # ✅ 🌿 Ecological Insights toggle (moved ABOVE the table)
+        show_insights = st.checkbox("Show Ecological Insights", value=False)
+
+        if show_insights:
+            st.markdown("## 🌿 Ecological Insights")
+
+            # Convert results to classification-like format
+            results_all = [{"species": c} for c in df_results["Class"].tolist()]
+            diversity_score, status = calculate_ecosystem_health(results_all)
+
+            st.markdown(f"""
+            <div style='
+                text-align:center;
+                background:rgba(255,255,255,0.7);
+                backdrop-filter:blur(10px);
+                border-radius:15px;
+                box-shadow:0 8px 18px rgba(0,0,0,0.15);
+                padding:1.5rem;
+                margin-bottom:1rem;
+            '>
+                <h3 style='color:#0D47A1;'>Ecosystem Health Index</h3>
+                <p style='font-size:1.2rem;'><b>{status}</b></p>
+                <p style='font-size:1rem;'>Shannon Diversity Score: <b>{diversity_score:.3f}</b></p>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # 🪸 Chart container
+            st.markdown('<div class="canvas-container">', unsafe_allow_html=True)
+            col1, col2 = st.columns(2)
+            with col1:
+                plot_biodiversity_pie(results_all)
+            with col2:
+                plot_species_abundance(results_all)
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        # === Detection Results Table ===
         st.write("### 🐚 Detection Results")
         st.dataframe(df_results, use_container_width=True)
 
-        # ✅ Only show summary if detections exist
+        # === Summary by class ===
         if not df_results.empty and "Class" in df_results.columns:
             summary_df = (
                 df_results.groupby("Class")
@@ -932,16 +965,6 @@ elif st.session_state.page == "Detection":
         else:
             st.info("No detections found in uploaded images.")
 
-        # === Summary by class ===
-        summary_df = (
-            df_results.groupby("Class")
-            .size()
-            .reset_index(name="Total Detections")
-            .sort_values(by="Total Detections", ascending=False)
-            .reset_index(drop=True)
-        )
-        st.dataframe(summary_df, use_container_width=True)
-
         # === CSV Download ===
         csv = df_results.to_csv(index=False).encode("utf-8")
         st.download_button(
@@ -950,6 +973,8 @@ elif st.session_state.page == "Detection":
             file_name="detection_results.csv",
             mime="text/csv"
         )
+
+
         
 elif st.session_state.page == "Metrics":
 
