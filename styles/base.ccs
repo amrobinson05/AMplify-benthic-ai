@@ -1,0 +1,42 @@
+.gradient-text {
+    font-size: 70px;
+    font-weight: 800;
+    text-align: center;
+    background: linear-gradient(to right, #0D47A1, #1565C0, #64B5F6);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-block;
+    margin-bottom: 10px;
+}
+
+.glow-title {
+    font-size: 70px;
+    font-weight: 800;
+    text-align: center;
+    background: linear-gradient(to right, #5fa8f3, #1e88e5, #90caf9);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow:
+        0 0 4px rgba(100,181,246,0.6),
+        0 0 10px rgba(33,150,243,0.3),
+        0 0 20px rgba(33,150,243,0.2);
+    animation: glowPulse 5s ease-in-out infinite;
+    display: inline-block;
+    margin-bottom: 10px;
+}
+
+@keyframes glowPulse {
+    0%, 100% {
+        text-shadow:
+            0 0 4px rgba(100,181,246,0.6),
+            0 0 10px rgba(33,150,243,0.3),
+            0 0 20px rgba(33,150,243,0.2);
+    }
+    50% {
+        text-shadow:
+            0 0 6px rgba(144,202,249,0.8),
+            0 0 14px rgba(33,150,243,0.5),
+            0 0 24px rgba(33,150,243,0.3);
+    }
+}
