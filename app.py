@@ -516,6 +516,11 @@ elif st.session_state.page == "Classification":
     </style>
     """, unsafe_allow_html=True)
 
+    # Track last uploaded files so we can detect new uploads
+    if "last_uploaded_files" not in st.session_state:
+        st.session_state.last_uploaded_files = []
+
+
     import time
 
     if uploaded_files:
@@ -577,7 +582,10 @@ elif st.session_state.page == "Classification":
         """
 
         from components.loading_overlay import show_loading_overlay
-        show_loading_overlay("Analyzing Marine Life...", duration=1.0)
+        if "last_uploaded" not in st.session_state or st.session_state.last_uploaded != [f.name for f in uploaded_files]:
+            st.session_state.last_uploaded = [f.name for f in uploaded_files]
+            from components.loading_overlay import show_loading_overlay
+            show_loading_overlay("Analyzing Marine Life...", duration=1.0)
 
 
         results_all = []  # store results for all images
@@ -680,7 +688,10 @@ elif st.session_state.page == "Detection":
         from components.species_info import species_info
         from components.species_info import get_species_info
 
-        show_loading_overlay("Running Detection Model...", duration=1.0)
+        if "last_uploaded" not in st.session_state or st.session_state.last_uploaded != [f.name for f in uploaded_file]:
+            st.session_state.last_uploaded = [f.name for f in uploaded_file]
+            from components.loading_overlay import show_loading_overlay
+            show_loading_overlay("Running Detection Model...", duration=1.0)
 
         results_data = []
 
