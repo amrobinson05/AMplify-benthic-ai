@@ -15,8 +15,15 @@ import io
 import pandas as pd
 import numpy as np
 from components.backgrounds.ocean_home import render_ocean_home
-from components.backgrounds.coral_classification import render_coral_scene
 from components.backgrounds.deep_detection import render_deep_sea
+
+def clear_uploaded_files():
+    """Reset uploaded files when switching models."""
+    for key in ["classification_upload", "detection_upload"]:
+        if key in st.session_state:
+            st.session_state[key] = None  # fully reset uploader state
+
+
 
 
 # PAGE CONFIG
@@ -25,6 +32,9 @@ st.set_page_config(
     page_icon="🌊",
     layout="wide"
 )
+
+
+
 
 
 
@@ -294,8 +304,16 @@ st.markdown(f"""
 # ======================================================
 
 # --- Initialize session state ---
+# ✅ Initialize session state once
 if "page" not in st.session_state:
     st.session_state.page = "Home"
+
+# ✅ Add these lines right after that
+if "classification_nonce" not in st.session_state:
+    st.session_state.classification_nonce = 0
+if "detection_nonce" not in st.session_state:
+    st.session_state.detection_nonce = 0
+
 
 # --- Tab bar layout ---
 st.markdown('<div class="tab-bar">', unsafe_allow_html=True)
@@ -303,20 +321,26 @@ col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     if st.button("Home", use_container_width=True):
+        st.session_state.classification_nonce += 1
+        st.session_state.detection_nonce += 1
         st.session_state.page = "Home"
         st.rerun()
 with col2:
     if st.button("Classification", use_container_width=True):
+        st.session_state.classification_nonce += 1
         st.session_state.page = "Classification"
         st.rerun()
 with col3:
     if st.button("Detection", use_container_width=True):
+        st.session_state.detection_nonce += 1
         st.session_state.page = "Detection"
         st.rerun()
 with col4:
-    if st.button("Metrics", use_container_width=True):  # ✅ add consistent width
+    if st.button("Metrics", use_container_width=True):
+        st.session_state.classification_nonce += 1
+        st.session_state.detection_nonce += 1
         st.session_state.page = "Metrics"
-        st.rerun()
+        st.experimental_rerun()
 
 st.markdown('</div>', unsafe_allow_html=True)
 
@@ -422,43 +446,54 @@ def predict(image):
 # ======================================================
 
 
+import streamlit.components.v1 as components
+
 if st.session_state.page == "Home":
     st.markdown("""
-        <div style="
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 5rem;
-        ">
-            <div style="
-                background: rgba(255, 255, 255, 0.6);
-                backdrop-filter: blur(10px);
-                -webkit-backdrop-filter: blur(10px);
-                border-radius: 18px;
-                box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-                padding: 2.5rem 3rem;
-                max-width: 800px;
-                text-align: center;
-                color: #04365c;
-            ">
-                <h1 style="font-size: 2.6rem; font-weight: 800; color: #0D47A1; margin-bottom: 0.4rem;">
-                    Welcome to AMplify AI 🌊
-                </h1>
-                <p style="font-size: 1rem; color: #1565C0; margin-bottom: 1.8rem;">
-                    <b>Created by:</b> Ariana Robinson &amp; Megan Timmes<br>
-                    <span style="font-size: 0.95rem; color: #04365c;">
-                        William &amp; Mary AI Case-a-thon — Fall 2025
-                    </span>
-                </p>
-                <p style="font-size: 1.2rem; line-height: 1.7;">
-                    We offer <b>2</b> fine-tuned deep learning models for marine life
-                    <b>classification</b> and <b>detection</b>.<br><br>
-                    Use the <b>Classification</b> model to identify benthic species in your photos,
-                    or the <b>Detection</b> model to locate and label organisms in full underwater scenes.
-                </p>
-            </div>
+        <style>
+        @keyframes floatCard {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+            100% { transform: translateY(0px); }
+        }
+        .floating-card {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 20px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+            padding: 3rem 3.5rem;
+            max-width: 850px;
+            margin: 6rem auto;
+            text-align: center;
+            color: #04365c;
+            animation: floatCard 6s ease-in-out infinite;
+        }
+        </style>
+
+        <div class="floating-card">
+            <h1 style="font-size: 2.8rem; font-weight: 900; color: #0D47A1; margin-bottom: 0.6rem;">
+                Welcome to <span style="color:#1565C0;">AMplify AI 🌊</span>
+            </h1>
+            <p style="font-size: 1rem; color: #1565C0; margin-bottom: 1.8rem; font-weight: 500;">
+                <b>Created by:</b> <span style="color:#0D47A1;">Ariana Robinson</span> &amp; 
+                <span style="color:#0D47A1;">Megan Timmes</span><br>
+                <span style="font-size: 0.95rem; color: #04365c;">
+                    William &amp; Mary AI Case-a-thon — <b>Fall 2025</b>
+                </span>
+            </p>
+            <p style="font-size: 1.25rem; line-height: 1.8; color: #04365c;">
+                We offer <b style="color:#0D47A1;">two fine-tuned deep learning models</b> 
+                for marine life <b style="color:#1565C0;">classification</b> and 
+                <b style="color:#1565C0;">detection</b>.<br><br>
+                Use the <b style="color:#0D47A1;">Classification</b> model to 
+                identify benthic species in your photos, or the 
+                <b style="color:#0D47A1;">Detection</b> model to 
+                locate and label organisms in full underwater scenes.
+            </p>
         </div>
     """, unsafe_allow_html=True)
+
 
 
 
@@ -471,7 +506,15 @@ elif st.session_state.page == "Classification":
     </div>
     """, unsafe_allow_html=True)
 
-    uploaded_files = st.file_uploader("", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
+    # --- In Classification page ---
+    uploaded_files = st.file_uploader(
+    "",
+    type=["jpg", "jpeg", "png"],
+    accept_multiple_files=True,
+    key=f"classification_upload_v{st.session_state.classification_nonce}"
+)
+
+
 
     import time
 
@@ -597,7 +640,10 @@ elif st.session_state.page == "Classification":
 # ... inside your loop, where you currently render the HTML ...
             if i < 1:
                 from components.species_info import get_species_info
+                from components.auto_scroll import auto_scroll_to_results
 
+                st.markdown("<div id='results-anchor'></div>", unsafe_allow_html=True)
+                auto_scroll_to_results()
                 info = get_species_info(species)
 
                 render_results_box(
@@ -651,103 +697,11 @@ elif st.session_state.page == "Classification":
         st.markdown("</div>", unsafe_allow_html=True)
         
 
-        from components.auto_scroll import auto_scroll_to_results
-        auto_scroll_to_results()
+        
 
 
 
-    st.markdown("""
-    <style>
-    /* === RESET STREAMLIT UPLOADER STYLING === */
-    [data-testid="stFileUploader"] section {
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        justify-content: center !important;
-        text-align: center !important;
-        gap: 20px !important;
-    }
-
-    [data-testid="stFileUploader"] {
-        position: relative !important;
-        z-index: 50 !important;
-        border-radius: 15px !important;
-        padding: 2rem 1rem !important;
-        background: rgba(255,255,255,0.45) !important;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-    }
-
-    /* Hide default gray text */
-    [data-testid="stFileUploaderLabel"],
-    [data-testid="stFileUploaderDropzoneInstructions"] {
-        display: none !important;
-    }
-
-    /* === ADD TITLE ABOVE BUTTON === */
-    [data-testid="stFileUploader"]::before {
-        content: "Upload Marine Life Photo";
-        font-size: 1.6rem;
-        font-weight: 700;
-        color: #0D47A1;
-        display: block;
-        margin-bottom: 1rem;
-    }
-
-    /* === REBUILD BROWSE BUTTON (REAL BUTTON STYLE) === */
-    [data-testid="stFileUploader"] section div div div button {
-        appearance: none !important;
-        display: inline-block !important;
-        border: none !important;
-        outline: none !important;
-        background: linear-gradient(to right, #1565C0, #1E88E5) !important;
-        color: white !important;
-        font-weight: 600 !important;
-        font-size: 1rem !important;
-        padding: 14px 32px !important;F
-        border-radius: 10px !important;
-        cursor: pointer !important;
-        transition: all 0.3s ease-in-out !important;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important;
-        text-transform: none !important;
-    }
-
-    /* Hover glow */
-    [data-testid="stFileUploader"] section div div div button:hover {
-        background: linear-gradient(to right, #0D47A1, #1565C0) !important;
-        transform: scale(1.05);
-        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
-    }
-
-    /* Ensure button text stays visible */
-    [data-testid="stFileUploader"] section div div div button * {
-        color: white !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
-    st.markdown("""
-    <style>
-    /* === Fix: Force dataframe above seagrass/fish/bubbles === */
-    [data-testid="stDataFrame"] iframe {
-        position: relative !important;
-        z-index: 9999 !important;
-    }
-
-    /* Backup: raise whole dataframe container */
-    [data-testid="stDataFrame"] {
-        position: relative !important;
-        z-index: 9999 !important;
-    }
-
-    /* Lower background visuals further if needed */
-    #seagrass-svg,
-    .species-container,
-    .bubble-container {
-        z-index: 0 !important;
-    }
-    </style>
-    """, unsafe_allow_html=True)
+    
 
 elif st.session_state.page == "Detection":
 
@@ -757,81 +711,16 @@ elif st.session_state.page == "Detection":
         return YOLO("models/detection_model.pt")  # path to your model
 
     detection_model = load_detection_model()
+    # --- In Detection page ---
     uploaded_file = st.file_uploader(
         "",
         type=["jpg", "jpeg", "png"],
-        accept_multiple_files=True
+        accept_multiple_files=True,
+        key=f"detection_upload_v{st.session_state.detection_nonce}"
     )
-    st.markdown("""
-        <style>
-        /* === RESET STREAMLIT UPLOADER STYLING === */
-        [data-testid="stFileUploader"] section {
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            justify-content: center !important;
-            text-align: center !important;
-            gap: 20px !important;
-        }
 
-        [data-testid="stFileUploader"] {
-            position: relative !important;
-            z-index: 50 !important;
-            border-radius: 15px !important;
-            padding: 2rem 1rem !important;
-            background: rgba(255,255,255,0.45) !important;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-        }
 
-        /* Hide default gray text */
-        [data-testid="stFileUploaderLabel"],
-        [data-testid="stFileUploaderDropzoneInstructions"] {
-            display: none !important;
-        }
-
-        /* === ADD TITLE ABOVE BUTTON === */
-        [data-testid="stFileUploader"]::before {
-            content: "Upload Underwater Image";
-            font-size: 1.6rem;
-            font-weight: 700;
-            color: #0D47A1;
-            display: block;
-            margin-bottom: 1rem;
-        }
-
-        /* === REBUILD BROWSE BUTTON === */
-        [data-testid="stFileUploader"] section div div div button {
-            appearance: none !important;
-            display: inline-block !important;
-            border: none !important;
-            outline: none !important;
-            background: linear-gradient(to right, #1565C0, #1E88E5) !important;
-            color: white !important;
-            font-weight: 600 !important;
-            font-size: 1rem !important;
-            padding: 14px 32px !important;
-            border-radius: 10px !important;
-            cursor: pointer !important;
-            transition: all 0.3s ease-in-out !important;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15) !important;
-            text-transform: none !important;
-        }
-
-        /* Hover glow */
-        [data-testid="stFileUploader"] section div div div button:hover {
-            background: linear-gradient(to right, #0D47A1, #1565C0) !important;
-            transform: scale(1.05);
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
-        }
-
-        /* Ensure button text stays visible */
-        [data-testid="stFileUploader"] section div div div button * {
-            color: white !important;
-        }
-        </style>
-        """, unsafe_allow_html=True)
+    
 
 
     if uploaded_file:
@@ -884,17 +773,17 @@ elif st.session_state.page == "Detection":
 
             # === Show results box for first image ===
             if i == 0:
+                from components.auto_scroll import auto_scroll_to_results
+                st.markdown("<div id='results-anchor'></div>", unsafe_allow_html=True)
+                auto_scroll_to_results()
                 render_results_box(
                     image_bytes=base64.b64decode(results_b64),
                     species=detected_species or "No objects detected",
                     confidence_percent=conf_percent or 0.0,
                     species_info=info
+
                 )
-
-
-            from components.auto_scroll import auto_scroll_to_results
-            auto_scroll_to_results()
-
+            
             
 
 
@@ -917,6 +806,19 @@ elif st.session_state.page == "Detection":
         st.write("### 🐚 Detection Results")
         st.dataframe(df_results, use_container_width=True)
 
+        # ✅ Only show summary if detections exist
+        if not df_results.empty and "Class" in df_results.columns:
+            summary_df = (
+                df_results.groupby("Class")
+                .size()
+                .reset_index(name="Total Detections")
+                .sort_values(by="Total Detections", ascending=False)
+                .reset_index(drop=True)
+            )
+            st.dataframe(summary_df, use_container_width=True)
+        else:
+            st.info("No detections found in uploaded images.")
+
         # === Summary by class ===
         summary_df = (
             df_results.groupby("Class")
@@ -935,6 +837,7 @@ elif st.session_state.page == "Detection":
             file_name="detection_results.csv",
             mime="text/csv"
         )
+        
 elif st.session_state.page == "Metrics":
 
     st.markdown("""

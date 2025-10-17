@@ -67,24 +67,61 @@ def render_results_box(image_bytes, species, confidence_percent, species_info=No
 
             <!-- Info Boxes -->
             <div style="display:flex; flex-direction:column; gap:1.2rem;">
-                <div style="background:rgba(255,255,255,0.95); border-radius:12px;
-                            padding:1rem 1.2rem; box-shadow:0 4px 10px rgba(0,0,0,0.15);
-                            font-size:1.05rem; line-height:1.5;">
+                <!-- Habitat -->
+                <div style="background:rgba(21,101,192,0.12); border-left:6px solid #1565C0;
+                            border-radius:12px; padding:1rem 1.2rem;
+                            box-shadow:0 4px 10px rgba(0,0,0,0.1);
+                            font-size:1.05rem; line-height:1.5; color:#0D47A1;">
                     <b>Habitat:</b><br>{habitat}
                 </div>
-                <div style="background:rgba(255,255,255,0.95); border-radius:12px;
-                            padding:1rem 1.2rem; box-shadow:0 4px 10px rgba(0,0,0,0.15);
-                            font-size:1.05rem; line-height:1.5;">
+
+                <!-- Depth Range -->
+                <div style="background:rgba(13,71,161,0.15); border-left:6px solid #0D47A1;
+                            border-radius:12px; padding:1rem 1.2rem;
+                            box-shadow:0 4px 10px rgba(0,0,0,0.1);
+                            font-size:1.05rem; line-height:1.5; color:#083b79;">
                     <b>Depth Range:</b><br>{depth}
                 </div>
-                <div style="background:rgba(255,255,255,0.95); border-radius:12px;
-                            padding:1rem 1.2rem; box-shadow:0 4px 10px rgba(0,0,0,0.15);
-                            font-size:1.05rem; line-height:1.5;">
+
+                <!-- Fun Fact -->
+                <div style="background:rgba(100,181,246,0.15); border-left:6px solid #42A5F5;
+                            border-radius:12px; padding:1rem 1.2rem;
+                            box-shadow:0 4px 10px rgba(0,0,0,0.1);
+                            font-size:1.05rem; line-height:1.5; color:#084c93;">
                     <b>Fun Fact:</b><br>{fun_fact}
                 </div>
             </div>
         </div>
     </div>
     """
+    # Remove Streamlit's default padding/background around the HTML component
+    # 🔧 Remove the outer Streamlit box and iframe border completely
+    st.markdown("""
+    <style>
+    /* Remove extra white/gray box Streamlit adds around components.html */
+    iframe[srcdoc] {
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    /* Remove the padding/margin Streamlit adds around that iframe */
+    [data-testid="stVerticalBlock"] > div,
+    [data-testid="stHorizontalBlock"] > div,
+    [data-testid="stComponent"] {
+        background: transparent !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* Make sure the entire area around it blends with your ocean background */
+    .block-container {
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 
     components.html(html, height=720, scrolling=False)
