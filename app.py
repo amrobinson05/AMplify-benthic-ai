@@ -15,6 +15,8 @@ import io
 import pandas as pd
 import numpy as np
 from components.backgrounds.ocean_home import render_ocean_home
+from components.backgrounds.coral_classification import render_coral_scene
+from components.backgrounds.deep_detection import render_deep_sea
 
 
 # PAGE CONFIG
@@ -63,11 +65,14 @@ if st.session_state.page == "Home":
     render_ocean_home()
     description = "Discover the ocean's mysteries. Classify benthic species in underwater images with AI-powered recognition."
 elif st.session_state.page == "Classification":
+    render_coral_scene()
     description = (
         "Use this model to identify marine life in underwater photos. "
         "It classifies images into seven benthic species: crab, eel, whelk, scallop, flatfish, roundfish, and skate."
+        
     )
 elif st.session_state.page == "Detection":
+    render_deep_sea()
     description = (
         "Use this model to locate and label marine species in underwater images by "
         "drawing bounding boxes around detected organisms and identifying their species."
