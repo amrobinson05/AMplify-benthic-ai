@@ -963,15 +963,24 @@ elif st.session_state.page == "Detection":
 
             # Store all detections
             boxes = result.boxes
-            for box in boxes:
-                cls_id = int(box.cls[0])
-                conf = float(box.conf[0])
-                xyxy = box.xyxy[0].tolist()
+            if boxes is not None and len(boxes) > 0:
+                for box in boxes:
+                    cls_id = int(box.cls[0])
+                    conf = float(box.conf[0])
+                    xyxy = box.xyxy[0].tolist()
+                    results_data.append({
+                        "Filename": uploaded_img.name,
+                        "Class": detection_model.names[cls_id],
+                        "Confidence (%)": round(conf * 100, 2),
+                        "Bounding Box": [round(x, 2) for x in xyxy]
+                    })
+            else:
+            # Add a row even if no detection was made
                 results_data.append({
                     "Filename": uploaded_img.name,
-                    "Class": detection_model.names[cls_id],
-                    "Confidence (%)": round(conf * 100, 2),
-                    "Bounding Box": [round(x, 2) for x in xyxy]
+                    "Class": "No animal detected",
+                    "Confidence (%)": 0.0,
+                    "Bounding Box": []
                 })
 
         # === Convert to DataFrame ===
@@ -1121,7 +1130,7 @@ elif st.session_state.page == "Metrics":
                 <h2 style="color:#0D47A1; font-weight:800;">Detection Model</h2>
                 <p style="color:#04365C; line-height:1.6;">
                     The dataset contained <strong>2,759 images</strong> that were labelled and included the coordinates of bounding boxes. 
-                    A <strong>YOLO11m</strong> model was trained for <strong>100 epochs</strong>, achieving a <strong>mAP of 90%</strong> on the test set
+                    A <strong>YOLO11m</strong> model was trained for <strong>100 epochs</strong>, achieving a <strong>mAP of 90.3%</strong> on the test set
                 </p>
             </div>
             """, unsafe_allow_html=True)
