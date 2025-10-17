@@ -1,19 +1,29 @@
-import streamlit as st, base64, time
+import streamlit as st, base64, time, os
 
-def show_loading_overlay(message="Analyzing Marine Life...", duration=1.0):
+def show_loading_overlay(
+    message="Analyzing Marine Life...",
+    duration=1.0,
+    image_path="images/starfish.png",
+    bg_color="rgba(21,101,192,0.55)"
+):
     """Displays the animated loading overlay with a spinner and progress bar."""
-    starfish_b64 = base64.b64encode(open("images/starfish.png", "rb").read()).decode()
 
-    st.markdown("""
+    if not os.path.exists(image_path):
+        st.error(f"Missing overlay image: {image_path}")
+        return
+
+    starfish_b64 = base64.b64encode(open(image_path, "rb").read()).decode()
+
+    st.markdown(f"""
     <style>
-    #loading-overlay {
+    #loading-overlay {{
         position:fixed; top:0; left:0; width:100vw; height:100vh;
-        background:rgba(21,101,192,0.55);
+        background:{bg_color};
         backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
         display:flex; flex-direction:column; align-items:center; justify-content:center;
         z-index:2147483647;
-    }
-    @keyframes spinStar {0%{transform:rotate(0deg);}100%{transform:rotate(360deg);}}
+    }}
+    @keyframes spinStar {{0%{{transform:rotate(0deg);}}100%{{transform:rotate(360deg);}}}}
     </style>
     """, unsafe_allow_html=True)
 
