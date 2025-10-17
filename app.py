@@ -1150,7 +1150,9 @@ elif st.session_state.page == "Metrics":
             """, unsafe_allow_html=True)
     st.markdown("##")  
     cm_image = Image.open("images/Confusion_matrix.png") 
-    st.image(cm_image, caption="Normalized Confusion Matrix",  width=500)
+    col1, col2, col3 = st.columns([1, 1, 3])
+    with col2:
+        st.image(cm_image, caption="Normalized Confusion Matrix", width=700)
     
     st.markdown("""
             <div style="
