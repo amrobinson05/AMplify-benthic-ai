@@ -203,7 +203,7 @@ div[data-testid="stButton"] > button p {
 # MODEL SETUP
 CLASSES = ['Eel', 'Scallop', 'Crab', 'Flatfish', 'Roundfish', 'Skate', 'Whelk']
 def load_model():
-    model = models.efficientnet_v2_m(pretrained=False)
+    model = models.efficientnet_v2_s(pretrained=False)
     num_features = model.classifier[1].in_features
     model.classifier[1] = nn.Linear(num_features, len(CLASSES))
     model.load_state_dict(torch.load("models/classification_model.pth", map_location=torch.device("cpu")))
