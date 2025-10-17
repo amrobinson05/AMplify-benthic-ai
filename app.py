@@ -309,6 +309,9 @@ elif st.session_state.page == "Detection":
         "Use this model to locate and label marine species in underwater images by "
         "drawing bounding boxes around detected organisms and identifying their species."
     )
+elif st.session_state.page == "Metrics":
+    description = ("Explore model accuracy, precision, and performance results."
+    )
 
 st.markdown(f"""
     <style>
@@ -985,6 +988,7 @@ elif st.session_state.page == "Detection":
             mime="text/csv"
         )
 elif st.session_state.page == "Metrics":
+
     st.markdown("""
         <div style="
             text-align:center;
