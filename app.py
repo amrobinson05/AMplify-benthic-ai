@@ -768,8 +768,11 @@ elif st.session_state.page == "Metrics":
                     A <strong>train–test split of 80/20</strong> was used, resulting in <strong>8,400 training images</strong> and <strong>2,100 test images</strong>. 
                     An <strong>EfficientNet-B0</strong> model was trained for <strong>15 epochs</strong>, achieving a <strong>94.33% accuracy</strong> on the test set.
                 </p>
-            </div>
+             <div>
             """, unsafe_allow_html=True)
+    st.markdown("##")  
+    cm_image = Image.open("images/Confusion_matrix.png") 
+    st.image(cm_image, caption="Normalized Confusion Matrix",  width=500)
     
     st.markdown("""
             <div style="
