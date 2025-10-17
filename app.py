@@ -16,12 +16,107 @@ import pandas as pd
 import numpy as np
 from components.backgrounds.ocean_home import render_ocean_home
 from components.backgrounds.deep_detection import render_deep_sea
+from collections import Counter
+import math
 
 def clear_uploaded_files():
     """Reset uploaded files when switching models."""
     for key in ["classification_upload", "detection_upload"]:
         if key in st.session_state:
             st.session_state[key] = None  # fully reset uploader state
+
+plt.rcParams.update({
+    "axes.facecolor": "none",
+    "figure.facecolor": "none",
+    "axes.edgecolor": "#64B5F6",
+    "axes.labelcolor": "#E3F2FD",
+    "xtick.color": "#E3F2FD",
+    "ytick.color": "#E3F2FD",
+    "text.color": "#E3F2FD",
+    "font.weight": "bold",
+    "axes.titleweight": "bold",
+})
+
+def calculate_ecosystem_health(results):
+    """Compute habitat-weighted Shannon diversity score."""
+    if not results:
+        return 0.0, "No Data"
+
+    species_list = [r.get("species") for r in results if r.get("species")]
+    species_counts = Counter(species_list)
+    total = sum(species_counts.values())
+    if total == 0:
+        return 0.0, "No Data"
+
+    # Shannon diversity
+    H = -sum((count/total) * math.log(count/total) for count in species_counts.values())
+    max_H = math.log(len(species_counts)) if len(species_counts) > 1 else 1
+    diversity_score = H / max_H
+
+    # Interpret qualitatively
+    if diversity_score > 0.75:
+        status = "🌿 Healthy ecosystem"
+    elif diversity_score > 0.4:
+        status = "🪸 Moderately diverse"
+    else:
+        status = "⚠️ Low diversity"
+
+    return diversity_score, status
+
+def plot_biodiversity_pie(results):
+    """Pie chart of species proportion with soft ocean glow."""
+    species_list = [r.get("species") for r in results if r.get("species")]
+    counts = Counter(species_list)
+    if not counts:
+        st.info("No data available for biodiversity chart.")
+        return
+
+    colors = [
+        "#5fa8f3", "#90caf9", "#42a5f5",
+        "#64b5f6", "#1e88e5", "#0d47a1", "#1565c0"
+    ][:len(counts)]
+
+    fig, ax = plt.subplots(figsize=(5.5, 5.5))
+    wedges, texts, autotexts = ax.pie(
+        counts.values(),
+        labels=counts.keys(),
+        autopct='%1.1f%%',
+        startangle=90,
+        colors=colors,
+        textprops={'color': 'white', 'fontsize': 10, 'weight': 'bold'},
+        wedgeprops={"edgecolor": "white", "linewidth": 2}
+    )
+    ax.set_title("Biodiversity Composition", fontsize=14, weight="bold", pad=20)
+    fig.patch.set_alpha(0.0)
+    st.pyplot(fig, transparent=True)
+
+def plot_species_abundance(results):
+    """Bar chart of species frequencies with glowing blue bars."""
+    species_list = [r.get("species") for r in results if r.get("species")]
+    counts = Counter(species_list)
+    if not counts:
+        st.info("No data available for abundance chart.")
+        return
+
+    species = list(counts.keys())
+    values = list(counts.values())
+    colors = plt.cm.Blues(np.linspace(0.4, 0.9, len(species)))
+
+    fig, ax = plt.subplots(figsize=(7, 4))
+    bars = ax.bar(species, values, color=colors, edgecolor="#E3F2FD", linewidth=1.5)
+    ax.set_title("Species Abundance", fontsize=14, weight="bold", pad=15)
+    ax.set_ylabel("Count", fontsize=12, weight="bold")
+
+    # Add glowing effect
+    for bar in bars:
+        bar.set_alpha(0.9)
+        bar.set_linewidth(1.2)
+        bar.set_edgecolor("white")
+
+    ax.grid(alpha=0.3, linestyle="--")
+    plt.xticks(rotation=25, ha="right")
+    fig.patch.set_alpha(0.0)
+    st.pyplot(fig, transparent=True)
 
 
 # PAGE CONFIG
@@ -516,48 +611,89 @@ elif st.session_state.page == "Classification":
     </style>
     """, unsafe_allow_html=True)
 
-    # Track last uploaded files so we can detect new uploads
-    if "last_uploaded_files" not in st.session_state:
-        st.session_state.last_uploaded_files = []
+    # === Ocean-themed chart container and text glow ===
+    st.markdown("""
+    <style>
+    /* Chart wrapper with translucent background and glow */
+    .canvas-container {
+        background: rgba(0, 24, 61, 0.45);
+        border-radius: 18px;
+        padding: 1.5rem;
+        box-shadow: 0 0 25px rgba(33,150,243,0.25);
+        margin-top: 1.5rem;
+    }
+
+    /* Section titles (e.g. "Ecological Insights") */
+    div[data-testid="stMarkdownContainer"] h2,
+    div[data-testid="stMarkdownContainer"] h3 {
+        color: #E3F2FD !important;
+        text-shadow: 0 0 8px rgba(21,101,192,0.7);
+    }
+
+    /* Paragraph text inside analysis sections */
+    div[data-testid="stMarkdownContainer"] p {
+        color: #E3F2FD !important;
+    }
+
+    /* Streamlit table tweaks (optional) */
+    [data-testid="stDataFrame"] {
+        border-radius: 10px !important;
+        box-shadow: 0 0 20px rgba(13,71,161,0.2);
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 
 
     import time
 
     if uploaded_files:
+        current_names = [f.name for f in uploaded_files]
+
+        # ✅ Detect a new batch of uploaded files
+        new_upload = (
+            "last_uploaded" not in st.session_state
+            or current_names != st.session_state.last_uploaded
+        )
+
+        if new_upload:
+            # Reset flags
+            st.session_state.last_uploaded = current_names
+            st.session_state.scrolled_after_upload = False
+
+            # ✅ Trigger loading overlay only once per new upload
+            from components.loading_overlay import show_loading_overlay
+            show_loading_overlay("Analyzing Marine Life...", duration=1.0)
+
+        # Continue with starfish overlay CSS (this part stays)
         starfish_b64 = base64.b64encode(open("images/starfish.png", "rb").read()).decode()
 
-        # 1️⃣ Define CSS & JS so overlay beats Streamlit’s container stack
         st.markdown("""
         <style>
         /* BACKGROUND LAYERS */
         .bubble-container, #seagrass-svg, .species-container {
             z-index: 0 !important;
         }
-
-        /* MIDDLE LAYERS (Upload + Results) */
         [data-testid="stFileUploader"], .results-box, .results-box-graph {
             position: relative !important;
             z-index: 10 !important;
         }
-
-        /* TOP LAYER (Loading Screen) */
         #loading-overlay {
             position: fixed !important;
             top: 0 !important;
             left: 0 !important;
             width: 100vw !important;
             height: 100vh !important;
-            background: rgba(21, 101, 192, 0.55) !important; /* translucent ocean blue */
+            background: rgba(21, 101, 192, 0.55) !important;
             backdrop-filter: blur(10px) !important;
             -webkit-backdrop-filter: blur(10px) !important;
             display: flex !important;
             flex-direction: column !important;
             align-items: center !important;
             justify-content: center !important;
-            z-index: 2147483647 !important; /* 🧱 MAXIMUM possible z-index */
+            z-index: 2147483647 !important;
             pointer-events: all !important;
         }
-
         @keyframes spinStar {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
@@ -565,27 +701,6 @@ elif st.session_state.page == "Classification":
         </style>
         """, unsafe_allow_html=True)
 
-        # 2️⃣ Overlay HTML — Injected last (so it’s final in DOM)
-        loading_html = f"""
-        <div id="loading-overlay">
-            <img src="data:image/png;base64,{starfish_b64}"
-                style="width:120px; height:auto; animation:spinStar 2.5s linear infinite;
-                        filter: drop-shadow(0 0 10px rgba(255,255,255,0.8));"/>
-            <p style="font-size:1.8rem; font-weight:700; margin-top:1rem; color:white;">Analyzing Marine Life...</p>
-            <div style="margin-top:1.5rem; width:300px; height:12px; background:rgba(255,255,255,0.3);
-                        border-radius:10px; overflow:hidden;">
-                <div id="load-bar" style="width:0%; height:100%;
-                            background:linear-gradient(to right, #64B5F6, #1565C0);
-                            border-radius:10px;"></div>
-            </div>
-        </div>
-        """
-
-        from components.loading_overlay import show_loading_overlay
-        if "last_uploaded" not in st.session_state or st.session_state.last_uploaded != [f.name for f in uploaded_files]:
-            st.session_state.last_uploaded = [f.name for f in uploaded_files]
-            from components.loading_overlay import show_loading_overlay
-            show_loading_overlay("Analyzing Marine Life...", duration=1.0)
 
 
         results_all = []  # store results for all images
@@ -613,16 +728,20 @@ elif st.session_state.page == "Classification":
                 from components.species_info import get_species_info
                 from components.auto_scroll import auto_scroll_to_results
 
-                st.markdown("<div id='results-anchor'></div>", unsafe_allow_html=True)
-                auto_scroll_to_results()
-                info = get_species_info(species)
+                # Only scroll once per new upload batch
+                if not st.session_state.get("scrolled_after_upload", False):
+                    st.markdown("<div id='results-anchor'></div>", unsafe_allow_html=True)
+                    auto_scroll_to_results()
+                    st.session_state.scrolled_after_upload = True
 
+                info = get_species_info(species)
                 render_results_box(
                     image_bytes=img_bytes,
                     species=species,
                     confidence_percent=confidence_percent,
-                    species_info=info,   # <- a single dict for that species (RIGHT)
+                    species_info=info,
                 )
+
     
         
         st.success(f"Processed {total_files} images!")
@@ -643,8 +762,44 @@ elif st.session_state.page == "Classification":
             for r in results_all
         ])
 
+        # 🌊 Optional Ecological Insights toggle
+        show_insights = st.checkbox("Show Ecological Insights", value=False)
+
+        if show_insights:
+            st.markdown("## 🌿 Ecological Insights")
+
+            diversity_score, status = calculate_ecosystem_health(results_all)
+
+            st.markdown(f"""
+            <div style='
+                text-align:center;
+                background:rgba(255,255,255,0.7);
+                backdrop-filter:blur(10px);
+                border-radius:15px;
+                box-shadow:0 8px 18px rgba(0,0,0,0.15);
+                padding:1.5rem;
+                margin-bottom:1rem;
+            '>
+                <h3 style='color:#0D47A1;'>Ecosystem Health Index</h3>
+                <p style='font-size:1.2rem;'><b>{status}</b></p>
+                <p style='font-size:1rem;'>Shannon Diversity Score: <b>{diversity_score:.3f}</b></p>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # 🪸 Chart container
+            st.markdown('<div class="canvas-container">', unsafe_allow_html=True)
+            col1, col2 = st.columns(2)
+            with col1:
+                plot_biodiversity_pie(results_all)
+            with col2:
+                plot_species_abundance(results_all)
+            st.markdown('</div>', unsafe_allow_html=True)
+
+
+
         st.write("### Classification Results")
         st.dataframe(df_results, use_container_width=True)
+
 
         # Convert DataFrame to downloadable CSV
         csv = df_results.to_csv(index=False).encode('utf-8')
