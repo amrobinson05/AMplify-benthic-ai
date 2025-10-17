@@ -1,6 +1,6 @@
 streamlit==1.29.0
 torch==2.5.0
-torchvision==0.17.2
+torchvision==0.22.0
 pillow
 pandas
 opencv-python-headless
