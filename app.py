@@ -64,7 +64,77 @@ if st.session_state.page == "Home":
         st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
     description = "Discover the ocean's mysteries. Classify benthic species in underwater images with AI-powered recognition."
 elif st.session_state.page == "Classification":
-    render_coral_scene()
+    render_deep_sea()
+    st.markdown("""
+<style>
+/* === Deep Blue File Uploader Box === */
+[data-testid="stFileUploader"] {
+    background: rgba(0, 24, 61, 0.6) !important;  /* translucent navy */
+    border: 3px dashed rgba(255, 255, 255, 0.5) !important;
+    border-radius: 18px !important;
+    box-shadow: 0 0 25px rgba(0, 40, 80, 0.5), inset 0 0 10px rgba(0, 80, 160, 0.3) !important;
+    width: 60% !important;
+    height: 400px !important;
+    margin: 2rem auto !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+/* === File Uploader Label/Subheading === */
+[data-testid="stFileUploader"]::before {
+    content: "Upload Marine Life Photo";
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ffffff !important; /* White subheading */
+    margin-bottom: 30px;
+    display: block;
+}
+
+/* === Browse Files Button (Darker with Glow) === */
+[data-testid="stFileUploader"] section div div div button {
+    background: linear-gradient(to right, #00142a, #002b5b) !important; /* darker navy */
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    border: none !important;
+    border-radius: 10px !important;
+    padding: 14px 36px !important;
+    box-shadow: 0 0 18px rgba(0, 100, 200, 0.25) !important;
+    transition: all 0.3s ease-in-out !important;
+}
+[data-testid="stFileUploader"] section div div div button:hover {
+    background: linear-gradient(to right, #003566, #004b8d) !important;
+    box-shadow: 0 0 30px rgba(0, 150, 255, 0.6) !important;
+    transform: scale(1.05);
+}
+.stButton > button {
+    background: #001d3d !important; /* solid dark navy */
+    color: #ffffff !important;      /* white text */
+    border: none !important;
+    border-radius: 10px !important;
+    font-weight: 700 !important;
+    font-size: 1.2rem !important;
+    padding: 0.6rem 2.2rem !important;
+    transition: all 0.3s ease-in-out !important;
+    box-shadow: 0 0 12px rgba(0, 50, 100, 0.3) !important;
+}}
+.stButton > button:hover {
+    background: linear-gradient(to right, #003566, #004b8d) !important;
+    box-shadow: 0 0 25px rgba(0, 150, 255, 0.6) !important;
+    transform: scale(1.03);
+}
+
+/* === Text Fix (White in Dark Theme) === */
+h1, h2, h3, h4, h5, label, p, span, div {
+    color: #ffffff !important;
+}
+</style>
+""", unsafe_allow_html=True)
+    
     description = (
         "Use this model to identify marine life in underwater photos. "
         "It classifies images into seven benthic species: crab, eel, whelk, scallop, flatfish, roundfish, and skate."
@@ -153,8 +223,10 @@ elif st.session_state.page == "Metrics":
     description = ("Explore model accuracy, precision, and performance results."
     )
 
+# 🌊 Title Styling — gradient for normal pages, glow for Classification/Detection
 st.markdown(f"""
     <style>
+    /* === Base Gradient Text (used for Home & Metrics) === */
     .gradient-text {{
         font-size: 70px;
         font-weight: 800;
@@ -166,15 +238,52 @@ st.markdown(f"""
         display: inline-block;
         margin-bottom: 10px;
     }}
-    </style>
 
+    /* === Glowing Text (used for Classification & Detection) === */
+    .glow-title {{
+        font-size: 70px;
+        font-weight: 800;
+        text-align: center;
+        background: linear-gradient(to right, #5fa8f3, #1e88e5, #90caf9);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow:
+            0 0 4px rgba(100,181,246,0.6),
+            0 0 10px rgba(33,150,243,0.3),
+            0 0 20px rgba(33,150,243,0.2);
+        animation: gentlePulse 5s ease-in-out infinite;
+        display: inline-block;
+        margin-bottom: 10px;
+    }}
+
+    @keyframes glowPulse {{
+        0%, 100% {{
+            text-shadow:
+                0 0 4px rgba(100,181,246,0.6),
+                0 0 10px rgba(33,150,243,0.3),
+                0 0 20px rgba(33,150,243,0.2);
+        }}
+        50% {{
+            text-shadow:
+                0 0 6px rgba(144,202,249,0.8),
+                0 0 14px rgba(33,150,243,0.5),
+                0 0 24px rgba(33,150,243,0.3);
+        }}
+    }}
+    </style>
+""", unsafe_allow_html=True)
+# Use glowing title for Classification and Detection pages
+glow_class = "glow-title" if st.session_state.page in ["Classification", "Detection"] else "gradient-text"
+
+st.markdown(f"""
     <div style='text-align:center;'>
-        <span class='gradient-text'>{page_heading}</span>
+        <span class='{glow_class}'>{page_heading}</span>
         <h5 style='text-align:center; color:#37474F;'>
             {description}
         </h5>
     </div>
 """, unsafe_allow_html=True)
+
 
 
 

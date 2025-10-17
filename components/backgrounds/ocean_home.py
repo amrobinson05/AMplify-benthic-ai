@@ -163,13 +163,14 @@ def render_ocean_home():
     # ADD BUBBLES
     # ======================================================
     bubbles_html = (
-        "<div class='bubble-container'>"
-        + "\n".join([
-            f"<div class='bubble' style='left:{i*3.3}%; width:{10+(i%5)*20}px; height:{10+(i%5)*20}px; animation-duration:{5+(i%6)*4}s; animation-delay:{i*0.7}s;'></div>"
-            for i in range(40)
-        ])
-        + "</div>"
-    )
+    "<div class='bubble-container'>"
+    + "\n".join([
+        f"<div class='bubble' style='left:{i*3.3}%; width:{6+(i%5)*12}px; height:{6+(i%5)*12}px; "
+        f"animation-duration:{6+(i%6)*5}s; animation-delay:{i*0.6}s; opacity:0.5;'></div>"
+        for i in range(55)
+    ])
+    + "</div>"
+)
     st.markdown(bubbles_html, unsafe_allow_html=True)
 
     # ======================================================

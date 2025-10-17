@@ -1,0 +1,10 @@
+[theme]
+base="dark"
+primaryColor="#0096c7"              # bright aqua-blue for buttons & accents
+backgroundColor="#00264d"           # softened navy-blue background
+secondaryBackgroundColor="#003a70"  # lighter steel-blue for panels
+textColor="#f1fbff"                 # clean, cool white-blue text
+font="sans serif"
+
+[client]
+showThemeSidebarOption = false
