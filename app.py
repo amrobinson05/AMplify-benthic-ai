@@ -19,6 +19,14 @@ from components.backgrounds.deep_detection import render_deep_sea
 from collections import Counter
 import math
 
+# 🌿 Ecological Role Dictionary for All 7 Benthic Species
+KEYSTONE_SPECIES = {
+    "Scallop": "", "Roundfish": "", "Crab": "",
+    "Whelk": "", "Skate": "", "Flatfish": "", "Eel": ""
+}
+
+
+
 def clear_uploaded_files():
     """Reset uploaded files when switching models."""
     for key in ["classification_upload", "detection_upload"]:
@@ -38,30 +46,36 @@ plt.rcParams.update({
 })
 
 def calculate_ecosystem_health(results):
-    """Compute habitat-weighted Shannon diversity score."""
+    """Compute adjusted ecosystem health score with richness penalty."""
     if not results:
         return 0.0, "No Data"
 
     species_list = [r.get("species") for r in results if r.get("species")]
     species_counts = Counter(species_list)
     total = sum(species_counts.values())
-    if total == 0:
+    S = len(species_counts)
+    if total == 0 or S == 0:
         return 0.0, "No Data"
 
-    # Shannon diversity
+    # Shannon diversity (normalized)
     H = -sum((count/total) * math.log(count/total) for count in species_counts.values())
-    max_H = math.log(len(species_counts)) if len(species_counts) > 1 else 1
-    diversity_score = H / max_H
+    max_H = math.log(S)
+    normalized_H = H / max_H if max_H > 0 else 0
 
-    # Interpret qualitatively
+    # Add richness adjustment (reward more species)
+    richness_modifier = min(S / 7.0, 1.0)  # 7 = total possible species
+    diversity_score = normalized_H * richness_modifier
+
+    # 🩵 Interpret ecosystem health (not just diversity)
     if diversity_score > 0.75:
-        status = "🌿 Healthy ecosystem"
+        status = "🌿 Stable and Resilient Ecosystem"
     elif diversity_score > 0.4:
-        status = "🪸 Moderately diverse"
+        status = "🪸 Functioning but Vulnerable Ecosystem"
     else:
-        status = "⚠️ Low diversity"
+        status = "⚠️ At-Risk Ecosystem"
 
     return diversity_score, status
+
 
 def plot_biodiversity_pie(results):
     """Pie chart of species proportion with soft ocean glow."""
@@ -651,17 +665,20 @@ elif st.session_state.page == "Classification":
         current_names = [f.name for f in uploaded_files]
 
         # 🧠 Detect if new files were ADDED (not just removed or re-ordered)
-        prev_names = st.session_state.get("last_uploaded_detection", [])
+        prev_names = st.session_state.get("last_uploaded_classification", [])
         added_files = [f for f in current_names if f not in prev_names]
 
         if added_files:
-            st.session_state.last_uploaded_detection = current_names
+            # Update session for classification uploads
+            st.session_state.last_uploaded_classification = current_names
             st.session_state.scrolled_after_upload = False
+
             from components.loading_overlay import show_loading_overlay
-            show_loading_overlay("Running Detection Model...", duration=1.0)
+            show_loading_overlay("Analyzing Marine Life...", duration=1.0)
         else:
             # Just update the list quietly (no overlay when removing)
-            st.session_state.last_uploaded_detection = current_names
+            st.session_state.last_uploaded_classification = current_names
+
 
 
         # Continue with starfish overlay CSS (this part stays)
@@ -766,26 +783,69 @@ elif st.session_state.page == "Classification":
 
         if show_insights:
             st.markdown("## 🌿 Ecological Insights")
+            
 
             diversity_score, status = calculate_ecosystem_health(results_all)
 
+            # --- Ecosystem Health Index Box ---
             st.markdown(f"""
             <div style='
                 text-align:center;
-                background:rgba(255,255,255,0.7);
-                backdrop-filter:blur(10px);
+                background:rgba(0, 24, 61, 0.8);  /* 🌊 darker navy translucent background */
+                backdrop-filter:blur(12px);
                 border-radius:15px;
-                box-shadow:0 8px 18px rgba(0,0,0,0.15);
+                box-shadow:0 8px 25px rgba(0,0,0,0.4);  /* stronger shadow for depth */
                 padding:1.5rem;
-                margin-bottom:1rem;
+                margin-bottom:1.5rem;
+                border:1px solid rgba(100,181,246,0.3); /* subtle glowing border */
             '>
                 <h3 style='color:#0D47A1;'>Ecosystem Health Index</h3>
-                <p style='font-size:1.2rem;'><b>{status}</b></p>
+                <p style='font-size:1.2rem;color:#0D47A1;'><b>{status}</b></p>
                 <p style='font-size:1rem;'>Shannon Diversity Score: <b>{diversity_score:.3f}</b></p>
             </div>
             """, unsafe_allow_html=True)
 
-            # 🪸 Chart container
+            # --- 🧭 Indicator / Keystone Species Logic (add this below the health index) ---
+            species_present = [r.get("species") for r in results_all if r.get("species")]
+            keystone_found = [s for s in species_present if s in KEYSTONE_SPECIES]
+
+            # --- 🧭 Indicator Species Summary (count only) ---
+            species_present = [r.get("species") for r in results_all if r.get("species")]
+            keystone_found = [s for s in species_present if s in KEYSTONE_SPECIES]
+            keystone_count = len(set(keystone_found))
+
+            # Color based on how many of the 7 appear
+            if keystone_count >= 6:
+                box_color = "#2e7d32"   # green – strong presence
+                text = "🌿 Excellent biodiversity — most indicator species detected."
+            elif keystone_count >= 3:
+                box_color = "#fbc02d"   # yellow – moderate presence
+                text = "🪸 Moderate biodiversity — several key species detected."
+            elif keystone_count >= 1:
+                box_color = "#ef6c00"   # orange – low presence
+                text = "⚠️ Low biodiversity — few indicator species detected."
+            else:
+                box_color = "#c62828"   # red – none
+                text = "🚫 No indicator species detected."
+
+            st.markdown(f"""
+            <div style='
+                background:rgba(0,24,61,0.5);
+                border-left:6px solid {box_color};
+                padding:1.2rem;
+                margin:1rem 0 1.5rem 0;
+                border-radius:10px;
+                box-shadow:0 4px 12px rgba(0,0,0,0.25);
+                color:#E3F2FD;
+                text-align:center;
+            '>
+                <h4 style='margin-top:0; color:#BBDEFB;'>Indicator Species Present: <b>{keystone_count}/7</b></h4>
+                <p style='font-size:0.95rem; color:#B3E5FC;'>{text}</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+
+            # --- 🪸 Chart container ---
             st.markdown('<div class="canvas-container">', unsafe_allow_html=True)
             col1, col2 = st.columns(2)
             with col1:
@@ -793,6 +853,7 @@ elif st.session_state.page == "Classification":
             with col2:
                 plot_species_abundance(results_all)
             st.markdown('</div>', unsafe_allow_html=True)
+
 
 
 
@@ -916,7 +977,7 @@ elif st.session_state.page == "Detection":
         # === Convert to DataFrame ===
         df_results = pd.DataFrame(results_data)
 
-        # ✅ 🌿 Ecological Insights toggle (moved ABOVE the table)
+        # ✅ 🌿 Ecological Insights toggle (before the table)
         show_insights = st.checkbox("Show Ecological Insights", value=False)
 
         if show_insights:
@@ -926,23 +987,66 @@ elif st.session_state.page == "Detection":
             results_all = [{"species": c} for c in df_results["Class"].tolist()]
             diversity_score, status = calculate_ecosystem_health(results_all)
 
+            # --- Ecosystem Health Index Box ---
             st.markdown(f"""
             <div style='
                 text-align:center;
-                background:rgba(255,255,255,0.7);
-                backdrop-filter:blur(10px);
+                background:rgba(0, 24, 61, 0.8);  /* 🌊 darker navy translucent background */
+                backdrop-filter:blur(12px);
                 border-radius:15px;
-                box-shadow:0 8px 18px rgba(0,0,0,0.15);
+                box-shadow:0 8px 25px rgba(0,0,0,0.4);  /* stronger shadow for depth */
                 padding:1.5rem;
-                margin-bottom:1rem;
+                margin-bottom:1.5rem;
+                border:1px solid rgba(100,181,246,0.3); /* subtle glowing border */
             '>
                 <h3 style='color:#0D47A1;'>Ecosystem Health Index</h3>
-                <p style='font-size:1.2rem;'><b>{status}</b></p>
-                <p style='font-size:1rem;'>Shannon Diversity Score: <b>{diversity_score:.3f}</b></p>
+                <p style='font-size:1.2rem;color:#0D47A1;'><b>{status}</b></p>
+                <p style='font-size:1rem; color:#0D47A1;'>Shannon Diversity Score: <b>{diversity_score:.3f}</b></p>
             </div>
             """, unsafe_allow_html=True)
 
-            # 🪸 Chart container
+            # Normalize both sides to lowercase for reliable matching
+            species_present = [r.get("species").strip().lower() for r in results_all if r.get("species")]
+
+            keystone_found = [
+                s for s in species_present
+                if s.capitalize() in KEYSTONE_SPECIES.keys()  # match capitalized form
+            ]
+
+            keystone_count = len(set(keystone_found))
+
+
+            # Color based on how many of the 7 appear
+            if keystone_count >= 6:
+                box_color = "#2e7d32"   # green – strong presence
+                text = "🌿 Excellent biodiversity — most indicator species detected."
+            elif keystone_count >= 3:
+                box_color = "#fbc02d"   # yellow – moderate presence
+                text = "🪸 Moderate biodiversity — several key species detected."
+            elif keystone_count >= 1:
+                box_color = "#ef6c00"   # orange – low presence
+                text = "⚠️ Low biodiversity — few indicator species detected."
+            else:
+                box_color = "#c62828"   # red – none
+                text = "🚫 No indicator species detected."
+
+            st.markdown(f"""
+            <div style='
+                background:rgba(0,24,61,0.5);
+                border-left:6px solid {box_color};
+                padding:1.2rem;
+                margin:1rem 0 1.5rem 0;
+                border-radius:10px;
+                box-shadow:0 4px 12px rgba(0,0,0,0.25);
+                color:#E3F2FD;
+                text-align:center;
+            '>
+                <h4 style='margin-top:0; color:#BBDEFB;'>Indicator Species Present: <b>{keystone_count}/7</b></h4>
+                <p style='font-size:0.95rem; color:#B3E5FC;'>{text}</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+            # --- 🪸 Chart container ---
             st.markdown('<div class="canvas-container">', unsafe_allow_html=True)
             col1, col2 = st.columns(2)
             with col1:
@@ -950,6 +1054,7 @@ elif st.session_state.page == "Detection":
             with col2:
                 plot_species_abundance(results_all)
             st.markdown('</div>', unsafe_allow_html=True)
+
 
         # === Detection Results Table ===
         st.write("### 🐚 Detection Results")
