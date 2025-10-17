@@ -650,20 +650,19 @@ elif st.session_state.page == "Classification":
     if uploaded_files:
         current_names = [f.name for f in uploaded_files]
 
-        # ✅ Detect a new batch of uploaded files
-        new_upload = (
-            "last_uploaded" not in st.session_state
-            or current_names != st.session_state.last_uploaded
-        )
+        # 🧠 Detect if new files were ADDED (not just removed or re-ordered)
+        prev_names = st.session_state.get("last_uploaded_detection", [])
+        added_files = [f for f in current_names if f not in prev_names]
 
-        if new_upload:
-            # Reset flags
-            st.session_state.last_uploaded = current_names
+        if added_files:
+            st.session_state.last_uploaded_detection = current_names
             st.session_state.scrolled_after_upload = False
-
-            # ✅ Trigger loading overlay only once per new upload
             from components.loading_overlay import show_loading_overlay
-            show_loading_overlay("Analyzing Marine Life...", duration=1.0)
+            show_loading_overlay("Running Detection Model...", duration=1.0)
+        else:
+            # Just update the list quietly (no overlay when removing)
+            st.session_state.last_uploaded_detection = current_names
+
 
         # Continue with starfish overlay CSS (this part stays)
         starfish_b64 = base64.b64encode(open("images/starfish.png", "rb").read()).decode()
@@ -842,16 +841,20 @@ elif st.session_state.page == "Detection":
         from io import BytesIO
         from components.species_info import get_species_info
 
-        # ✅ Detect new upload (same logic as classification)
         current_names = [f.name for f in uploaded_files]
-        new_upload = (
-            "last_uploaded_detection" not in st.session_state
-            or current_names != st.session_state.last_uploaded_detection
-        )
-        if new_upload:
+
+        # 🧠 Detect if new files were ADDED (not just removed or re-ordered)
+        prev_names = st.session_state.get("last_uploaded_detection", [])
+        added_files = [f for f in current_names if f not in prev_names]
+
+        if added_files:
             st.session_state.last_uploaded_detection = current_names
             st.session_state.scrolled_after_upload = False
             show_loading_overlay("Running Detection Model...", duration=1.0)
+        else:
+            # Just update the list quietly (no overlay when removing)
+            st.session_state.last_uploaded_detection = current_names
+
 
         results_data = []
 
