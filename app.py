@@ -61,7 +61,7 @@ button, [role="button"], [data-testid="stButton"] {
 }
 
 /* Avoid fade effects on images */
-img:not(.species):not(.spinStar) {
+img:not(.species):not(.spinStar):not(.jellyfish) {
     transition: none !important;
     animation: none !important;
 }
