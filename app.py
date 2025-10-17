@@ -1170,5 +1170,24 @@ elif st.session_state.page == "Metrics":
                 </p>
             </div>
             """, unsafe_allow_html=True)
+    df_detection_metrics = pd.DataFrame({
+    "Class": ["Crab", "Eel", "Flatfish", "Roundfish", "Scallop", "Skate", "Whelk"],
+    "Precision": [0.969, 0.802, 0.894, 0.709, 0.787, 0.924, 0.725],
+    "Recall": [0.800, 0.941, 0.972, 0.737, 0.856, 0.934, 0.897],
+    "mAP@50": [0.901, 0.926, 0.965, 0.776, 0.883, 0.957, 0.892],
+    "mAP@50–95": [0.585, 0.711, 0.649, 0.547, 0.669, 0.774, 0.549]
+})
 
+
+    col1, col2 = st.columns([1, 1])
+    with col1:
+        st.markdown('<h2 style="color:#0D47A1; font-weight:800; text-align:center;">Detection Model Metrics</h2>', unsafe_allow_html=True)
+        st.dataframe(df_detection_metrics.style.format({
+                "Precision": "{:.3f}",
+                "Recall": "{:.3f}",
+                "mAP@50": "{:.3f}",
+                "mAP@50–95": "{:.3f}"
+            }), use_container_width=True)
+    with col2:
+        st.markdown("")
 
