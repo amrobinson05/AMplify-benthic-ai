@@ -759,16 +759,41 @@ elif st.session_state.page == "Detection":
 elif st.session_state.page == "Metrics":
 
     st.markdown("""
-        <div style="
-            text-align:center;
-            background: rgba(255,255,255,0.6);
-            backdrop-filter: blur(10px);
-            border-radius: 18px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-            padding: 2rem;
-            margin-top: 2rem;
-        ">
-            <h2 style="color:#0D47A1; font-weight:800;">📊 Model Metrics</h2>
-            <p style="color:#04365c;">Coming soon — visualize accuracy, loss, and performance of your benthic models here!</p>
-        </div>
-    """, unsafe_allow_html=True)
+            <div style="
+                text-align:center;
+                background: rgba(255,255,255,0.6);
+                backdrop-filter: blur(10px);
+                border-radius: 18px;
+                box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+                padding: 2rem;
+                margin-top: 2rem;
+            ">
+                <h2 style="color:#0D47A1; font-weight:800;">Classification Model</h2>
+                <p style="color:#04365C; line-height:1.6;">
+                    The dataset contained <strong>10,500 images</strong>, divided into <strong>7 classes</strong> (1,200 images per class). 
+                    A <strong>train–test split of 80/20</strong> was used, resulting in <strong>8,400 training images</strong> and <strong>2,100 test images</strong>. 
+                    An <strong>EfficientNet-B0</strong> model was trained for <strong>15 epochs</strong>, achieving a <strong>91.14% accuracy</strong> on the test set.
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+    
+    st.markdown("""
+            <div style="
+                text-align:center;
+                background: rgba(255,255,255,0.6);
+                backdrop-filter: blur(10px);
+                border-radius: 18px;
+                box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+                padding: 2rem;
+                margin-top: 2rem;
+            ">
+                <h2 style="color:#0D47A1; font-weight:800;">Detection Model</h2>
+                <p style="color:#04365C; line-height:1.6;">
+                    The dataset contained <strong>2,759 images</strong>, divided into <strong>7 classes</strong>. 
+                    A <strong>train–test split of 80/20</strong> was used, resulting in <strong>8,400 training images</strong> and <strong>2,100 test images</strong>. 
+                    A <strong>YOLO11m</strong> model was trained for <strong>100 epochs</strong>, achieving a <strong>mAP of 90%</strong> on the test set
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+
+
