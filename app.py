@@ -1166,7 +1166,7 @@ elif st.session_state.page == "Metrics":
                 <h2 style="color:#0D47A1; font-weight:800;">Detection Model</h2>
                 <p style="color:#04365C; line-height:1.6;">
                     The dataset contained <strong>2,759 images</strong> that were labelled and included the coordinates of bounding boxes. 
-                    A <strong>YOLO11m</strong> model was trained for <strong>100 epochs</strong>, achieving a <strong>mAP of 90.3%</strong> on the test set
+                    A <strong>YOLO11m</strong> model was trained for <strong>100 epochs</strong>, achieving a <strong>mAP of 90.1%</strong> on the test set
                 </p>
             </div>
             """, unsafe_allow_html=True)
@@ -1189,5 +1189,21 @@ elif st.session_state.page == "Metrics":
                 "mAP@50–95": "{:.3f}"
             }), use_container_width=True)
     with col2:
-        st.markdown("")
+        st.markdown('<h2 style="color:#0D47A1; font-weight:800; text-align:center;">Bar Chart</h2>', unsafe_allow_html=True)
+        df_plot = df_detection_metrics.melt(
+        id_vars="Class",
+        value_vars=["Precision", "Recall", "mAP@50"],
+        var_name="Metric",
+        value_name="Score"
+    )
+
+        # Plot
+        plt.figure(figsize=(10,5))
+        sns.barplot(x="Class", y="Score", hue="Metric", data=df_plot)
+        plt.ylim(0,1)
+        plt.title("Per-Class Detection Performance", fontsize=14, color="#0D47A1", fontweight="bold")
+        plt.xlabel("Species")
+        plt.ylabel("Score")
+        plt.legend(loc="lower right")
+        st.pyplot(plt.gcf())
 
