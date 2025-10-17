@@ -824,7 +824,6 @@ elif st.session_state.page == "Classification":
             mime="text/csv"
         )
             
-        st.write("Results for all images are stored in `Classifications` for later use or download.")
         st.markdown("<div id='results-anchor'></div>", unsafe_allow_html=True)
 
         st.markdown("</div>", unsafe_allow_html=True)
@@ -1085,19 +1084,6 @@ elif st.session_state.page == "Detection":
         st.write("### 🐚 Detection Results")
         st.dataframe(df_results, use_container_width=True)
 
-        # === Summary by Class ===
-        if not df_results.empty and "Class" in df_results.columns:
-            summary_df = (
-                df_results.groupby("Class")
-                .size()
-                .reset_index(name="Total Detections")
-                .sort_values(by="Total Detections", ascending=False)
-                .reset_index(drop=True)
-            )
-            st.dataframe(summary_df, use_container_width=True)
-        else:
-            st.info("No detections found in uploaded images.")
-
         # === CSV Download ===
         csv = df_results.to_csv(index=False).encode("utf-8")
         st.download_button(
@@ -1106,6 +1092,8 @@ elif st.session_state.page == "Detection":
             file_name="detection_results.csv",
             mime="text/csv"
         )
+
+        
 
 
 
