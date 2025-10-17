@@ -32,7 +32,7 @@ def show_loading_overlay(
         progress = i * (100 / 30)
         loading_placeholder.markdown(f"""
         <div id="loading-overlay">
-            <img src="data:image/png;base64,{starfish_b64}"
+            <img class="spinStar" src="data:image/png;base64,{starfish_b64}"
                 style="width:120px; height:auto; animation:spinStar 2.5s linear infinite;
                         filter:drop-shadow(0 0 10px rgba(255,255,255,0.8));"/>
             <p style="font-size:1.8rem; font-weight:700; margin-top:1rem; color:white;">
