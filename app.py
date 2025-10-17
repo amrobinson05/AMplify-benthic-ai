@@ -279,18 +279,17 @@ div[data-testid="stButton"] > button p {
 # MODEL SETUP
 CLASSES = ['Eel', 'Scallop', 'Crab', 'Flatfish', 'Roundfish', 'Skate', 'Whelk']
 def load_model():
-    model = models.efficientnet_b0(pretrained=False)
+    model = models.efficientnet_v2_s(pretrained=False)
     num_features = model.classifier[1].in_features
     model.classifier[1] = nn.Linear(num_features, len(CLASSES))
-    model.load_state_dict(torch.load("models/benthic_model.pth", map_location=torch.device("cpu")))
+    model.load_state_dict(torch.load("models/classification_model.pth", map_location=torch.device("cpu")))
     model.eval()
     return model
 
 model = load_model()
 
 transform = transforms.Compose([
-    transforms.Resize(256),
-    transforms.CenterCrop(224),
+    transforms.Resize((384, 384)),  # V2-S input
     transforms.ToTensor(),
     transforms.Normalize(
         mean=[0.485, 0.456, 0.406],
@@ -843,10 +842,13 @@ elif st.session_state.page == "Metrics":
                 <p style="color:#04365C; line-height:1.6;">
                     The dataset contained <strong>10,500 images</strong>, divided into <strong>7 classes</strong> (1,200 images per class). 
                     A <strong>train–test split of 80/20</strong> was used, resulting in <strong>8,400 training images</strong> and <strong>2,100 test images</strong>. 
-                    An <strong>EfficientNet-B0</strong> model was trained for <strong>15 epochs</strong>, achieving a <strong>91.14% accuracy</strong> on the test set.
+                    An <strong>EfficientNet-B0</strong> model was trained for <strong>15 epochs</strong>, achieving a <strong>94.33% accuracy</strong> on the test set.
                 </p>
-            </div>
+             <div>
             """, unsafe_allow_html=True)
+    st.markdown("##")  
+    cm_image = Image.open("images/Confusion_matrix.png") 
+    st.image(cm_image, caption="Normalized Confusion Matrix",  width=500)
     
     st.markdown("""
             <div style="
