@@ -7,3 +7,4 @@ opencv-python-headless
 matplotlib
 ultralytics
 numpy<2
+seaborn
